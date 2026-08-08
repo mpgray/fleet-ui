@@ -72,6 +72,31 @@ img { max-width: 100%; height: auto; }
 .search-form .input { padding: 0.4rem 0.75rem; font-size: 0.85rem; width: 11rem; }
 .search-form .btn { padding: 0.45rem 0.7rem; }
 
+/* ── Fleet cross-links (macros/fleet.html) ──────────────────────────────
+   A link to a sibling site leaves this hostname, so it is drawn differently
+   from the site's own nav. Outlined rather than louder: it should read as a
+   way across, not as the most important thing in the header. */
+.site-nav .fleet-link {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+.site-nav .fleet-link:hover {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.related-guides { margin-top: 2.5rem; }
+.guide-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+.guide-item {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 8px);
+  background: var(--surface);
+}
+.guide-link { font-weight: 600; text-decoration: none; color: var(--text); }
+.guide-link:hover { color: var(--accent); text-decoration: underline; }
+.guide-summary { margin: 0.3rem 0 0; font-size: 0.9rem; color: var(--muted); }
+
 /* ── Hero ───────────────────────────────────────────────────────────── */
 .hero { margin: 2rem 0 2.5rem; }
 .hero-link {

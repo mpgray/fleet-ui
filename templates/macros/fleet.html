@@ -1,0 +1,52 @@
+{#
+  Cross-links between the sites of one fleet.
+
+  A blog and its companion sites are one product wearing several hostnames, and
+  the link between them is the only thing that tells a reader that. It renders
+  identically on every site in the fleet because it renders from here — the
+  alternative is each repo hand-writing its own header link, which is how a
+  fleet ends up with three different words for the same destination.
+
+  The link list is not written by hand anywhere. It comes from the extension
+  registry in articles-ai and reaches each site through /fleet/site.json, so
+  registering a companion makes it appear in both directions at once.
+#}
+
+{% macro fleet_nav(links, current_url='') %}
+  {#
+    `current_url` is the site doing the rendering. It is excluded by URL rather
+    than by kind: a blog could perfectly well have two companions of the same
+    kind — a database per game edition, say — and filtering on kind would hide
+    the sibling along with the self.
+  #}
+  {%- set here = (current_url or '').rstrip('/') -%}
+  {%- for link in links or [] -%}
+    {%- if (link.url or '').rstrip('/') != here -%}
+      <a class="fleet-link" href="{{ link.url }}">{{ link.label }}<span aria-hidden="true"> &rarr;</span></a>
+    {%- endif -%}
+  {%- endfor -%}
+{% endmacro %}
+
+
+{#
+  Guides from the companion blog that mention the thing on this page.
+
+  Rendered on an extension site, pointing back at the blog. Deliberately plain:
+  these are links off-site, and dressing them up like the site's own content
+  invites a reader to think they are.
+#}
+{% macro related_guides(articles, heading='Guides') %}
+  {%- if articles -%}
+  <section class="section related-guides">
+    <h2 class="section-title">{{ heading }}</h2>
+    <ul class="guide-list">
+      {%- for article in articles %}
+      <li class="guide-item">
+        <a class="guide-link" href="{{ article.url }}">{{ article.title }}</a>
+        {%- if article.summary %}<p class="guide-summary">{{ article.summary }}</p>{% endif -%}
+      </li>
+      {%- endfor %}
+    </ul>
+  </section>
+  {%- endif -%}
+{% endmacro %}
