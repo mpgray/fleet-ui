@@ -88,3 +88,4 @@ Left as-is so the initial extraction stays byte-identical. Fix these once
   and card grids; it will not hold up for wide content such as stat tables, so
   consumers rendering those must supply their own `overflow-x: auto` containers
   and breakpoints.
+# fleet-ui
