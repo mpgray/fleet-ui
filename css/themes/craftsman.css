@@ -1,0 +1,19 @@
+/* craftsman — drivewayhome.com: warm neutrals, forest green, sturdy slabs. */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap');
+
+:root {
+  --bg: #f4f2ee;
+  --surface: #ffffff;
+  --text: #2f3230;
+  --muted: #6f7570;
+  --accent: #2e6b3f;
+  --accent-contrast: #ffffff;
+  --border: #ddd8ce;
+  --font-body: 'Source Sans 3', system-ui, sans-serif;
+  --font-heading: 'Roboto Slab', Georgia, serif;
+  --radius: 6px;
+  --header-bg: #2f3230;
+  --header-text: #f4f2ee;
+}
+
+.site-header { border-bottom: 4px solid var(--accent); }

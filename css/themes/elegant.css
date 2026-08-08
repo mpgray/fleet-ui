@@ -1,0 +1,21 @@
+/* elegant — graywedding.org: ivory, dusty rose, serif display type. */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Lato:wght@400;700&display=swap');
+
+:root {
+  --bg: #faf7f2;
+  --surface: #ffffff;
+  --text: #3d3230;
+  --muted: #93807b;
+  --accent: #b76e79;
+  --accent-contrast: #ffffff;
+  --border: #eadfd8;
+  --font-body: 'Lato', system-ui, sans-serif;
+  --font-heading: 'Cormorant Garamond', serif;
+  --radius: 2px;
+  --header-bg: #faf7f2;
+  --header-text: #3d3230;
+}
+
+.site-title { letter-spacing: 0.06em; font-style: italic; }
+.hero-title, .article-title { font-weight: 500; }
+.card { box-shadow: 0 1px 6px rgba(61, 50, 48, 0.06); }

@@ -1,0 +1,22 @@
+/* brewhouse — homebrew: copper kettle and cellar. Amber, malt, dark wood. */
+@import url('https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=Karla:wght@400;500;700&display=swap');
+
+:root {
+  --bg: #faf6ef;
+  --surface: #ffffff;
+  --text: #2b2118;
+  --muted: #7a6a59;
+  --accent: #a0522d;
+  --accent-contrast: #ffffff;
+  --border: #e5dac9;
+  --font-body: 'Karla', system-ui, sans-serif;
+  --font-heading: 'Bitter', Georgia, serif;
+  --radius: 8px;
+  --header-bg: #3a2a1d;
+  --header-text: #faf6ef;
+}
+
+.site-header { border-bottom: 4px solid var(--accent); }
+/* Recipes live in tables here, so give them room to breathe. */
+article table { width: 100%; }
+article table th { background: var(--surface); }

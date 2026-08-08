@@ -1,0 +1,22 @@
+/* terminal — lan.surf: CRT green-on-black, self-hosted networking vibes. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg: #060a06;
+  --surface: #0c140c;
+  --text: #b6e3b6;
+  --muted: #5d8a5d;
+  --accent: #33ff66;
+  --accent-contrast: #060a06;
+  --border: #1c2e1c;
+  --font-body: 'IBM Plex Mono', monospace;
+  --font-heading: 'IBM Plex Mono', monospace;
+  --radius: 0px;
+  --header-bg: #081008;
+  --header-text: #b6e3b6;
+}
+
+.site-title::before { content: '> '; color: var(--accent); }
+.site-title::after { content: '_'; animation: blink 1.2s step-end infinite; color: var(--accent); }
+@keyframes blink { 50% { opacity: 0; } }
+body { font-size: 0.98rem; }

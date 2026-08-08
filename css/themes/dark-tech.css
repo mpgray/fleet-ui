@@ -1,0 +1,20 @@
+/* dark-tech — discursivetech.com: near-black, electric blue, monospace headings. */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Inter:wght@400;600&display=swap');
+
+:root {
+  --bg: #0b0e14;
+  --surface: #141922;
+  --text: #d7dde6;
+  --muted: #8a94a3;
+  --accent: #4da3ff;
+  --accent-contrast: #0b0e14;
+  --border: #232b38;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'JetBrains Mono', monospace;
+  --radius: 6px;
+  --header-bg: #0e1219;
+  --header-text: #e6ecf5;
+}
+
+.card-category { font-family: 'JetBrains Mono', monospace; }
+.site-title::before { content: '~/'; color: var(--accent); }

@@ -1,0 +1,21 @@
+/* bottomlineinsight — bottomlineinsight.com: navy finance blue, understated green for gains. */
+@import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap');
+
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --text: #1a2740;
+  --muted: #5c6b82;
+  --accent: #1d4e89;
+  --accent-contrast: #ffffff;
+  --border: #dde3ec;
+  --font-body: 'Source Sans 3', system-ui, sans-serif;
+  --font-heading: 'Libre Franklin', system-ui, sans-serif;
+  --radius: 4px;
+  --header-bg: #0f2647;
+  --header-text: #f4f6f9;
+}
+
+.site-header { border-bottom: 3px solid #1e7a4c; }
+.author-quals, .tag { color: #1e7a4c; }
+.tag { border-color: rgba(30, 122, 76, 0.35); }

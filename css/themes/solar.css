@@ -1,0 +1,21 @@
+/* solar — diysolar: high desert daylight. Warm sand, deep sky, amber accents. */
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #fbf8f2;
+  --surface: #ffffff;
+  --text: #232a33;
+  --muted: #6b7480;
+  --accent: #c46a10;
+  --accent-contrast: #ffffff;
+  --border: #e6dfd2;
+  --font-body: 'Barlow', system-ui, sans-serif;
+  --font-heading: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  --radius: 4px;
+  --header-bg: #1d2b3a;
+  --header-text: #fbf8f2;
+}
+
+/* Headings run tight and wide, like a spec sheet header. */
+.site-header { border-bottom: 3px solid var(--accent); }
+article h2, article h3 { letter-spacing: 0.01em; }

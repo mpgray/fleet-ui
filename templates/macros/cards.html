@@ -1,0 +1,109 @@
+{% from "macros/icons.html" import icon %}
+
+{# avatar(person, size, class, always) — shared image renderer with an icon
+   fallback when avatar_path is missing, used by byline() and the header views.
+
+   Renders nothing unless the site opts in via sites.show_author_avatars. The
+   persona avatars are illustrated characters; next to technical writing they
+   read as unserious. Importers of this macro need `with context` for `site`.
+
+   `always` bypasses that switch, and only writer bylines pass it. The setting
+   exists because of the illustrated-character problem (see
+   migrations/015_hide_author_avatars.sql); it was never about real people. A
+   contributor's photograph is the opposite case — it is the evidence that a
+   person stands behind the article — so there is no new setting for it. Do not
+   "fix" this by making it obey the flag; tests/test_writer_public_profile.py
+   locks it. #}
+{% macro avatar(person, size=44, class='', always=False) %}
+{% if not always and site is defined and not site.show_author_avatars %}{# avatars off for this site #}
+{% elif person and person.avatar_path %}
+  <img class="avatar-img {{ class }}" src="/media/{{ person.avatar_path }}" alt="" width="{{ size }}" height="{{ size }}">
+{% else %}
+  <span class="avatar-fallback {{ class }}" style="width:{{ size }}px;height:{{ size }}px" aria-hidden="true">{{ icon('user') }}</span>
+{% endif %}
+{% endmacro %}
+
+{# article_card(view) — view is the dict built by public_app._article_view #}
+{% macro article_card(view) %}
+<article class="card">
+  <a class="card-link" href="/{{ view.category_slug }}/{{ view.article.slug }}/">
+    {% if view.hero %}
+      <img class="card-image" src="/media/{{ view.hero.local_path }}" alt="{{ view.hero.alt_text }}" loading="lazy">
+    {% else %}
+      <div class="card-image card-image-placeholder" aria-hidden="true">{{ icon('image') }}</div>
+    {% endif %}
+    <div class="card-body">
+      {% if view.category %}<span class="card-category">{{ icon('tag') }} {{ view.category.name }}</span>{% endif %}
+      <h3 class="card-title">{{ view.article.title }}</h3>
+      <p class="card-excerpt">{{ view.article.meta_description }}</p>
+      <div class="card-meta">
+        {% if view.byline %}<span>{{ icon('user') }} {{ view.byline.name }}</span>{% endif %}
+        {% if view.article.published_at %}<time datetime="{{ view.article.published_at }}">{{ icon('clock') }} {{ view.article.published_at[:10] }}</time>{% endif %}
+      </div>
+    </div>
+  </a>
+</article>
+{% endmacro %}
+
+{# byline(author, article, writer) — the two kinds are structurally different,
+   not the same block with different colours. A persona gets a name, an opaque
+   URL and its `interests`; a person gets a photograph that always shows, a
+   readable URL, a real job title, real credentials, and an "About the author"
+   box at the foot of the article (writer_box below) that a persona cannot have,
+   because it has nothing truthful to put in one. #}
+{% macro byline(author, article, writer=None) %}
+{% if writer %}
+<div class="byline writer-byline">
+  {{ avatar(writer, size=56, class='writer-photo', always=True) }}
+  <div class="byline-text">
+    <a class="byline-name writer-name" href="/writer/{{ writer.slug }}/">{{ writer.display_name }}</a>
+    {% if writer.job_title %}<span class="writer-role">{{ writer.job_title }}</span>{% endif %}
+    {# Real credentials, published on purpose — the deliberate opposite of the
+       persona branch below. See migrations/018_writers.sql. #}
+    {% if writer.credentials %}<span class="writer-credentials">{{ writer.credentials }}</span>{% endif %}
+    {% if article.published_at %}
+      <time class="byline-date" datetime="{{ article.published_at }}">{{ article.published_at[:10] }}</time>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="byline">
+  {% if author %}{{ avatar(author, size=44, class='byline-avatar') }}{% endif %}
+  <div class="byline-text">
+    {% if author %}
+      <a class="byline-name" href="/author/{{ author.slug }}/">{{ author.name }}</a>
+      {# interests only — qualifications/bio are invented and stay prompt-side #}
+      {% if author.interests %}<span class="byline-quals">{{ author.interests }}</span>{% endif %}
+    {% endif %}
+    {% if article.published_at %}
+      <time class="byline-date" datetime="{{ article.published_at }}">{{ article.published_at[:10] }}</time>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endmacro %}
+
+{# writer_box(writer, bio_html, links) — "About the author", at the foot of an
+   article written by a person. Personas do not get one and cannot: their bio is
+   invented, so there is nothing here that would be true to publish. #}
+{% macro writer_box(writer, bio_html='', links=None) %}
+<aside class="writer-box">
+  {{ avatar(writer, size=72, class='writer-photo', always=True) }}
+  <div class="writer-box-text">
+    <h2 class="writer-box-name">
+      <a href="/writer/{{ writer.slug }}/">{{ writer.display_name }}</a>
+    </h2>
+    {% if writer.job_title %}<p class="writer-role">{{ writer.job_title }}</p>{% endif %}
+    {% if writer.credentials %}<p class="writer-credentials">{{ writer.credentials }}</p>{% endif %}
+    {% if bio_html %}<div class="writer-bio">{{ bio_html | safe }}</div>{% endif %}
+    {% if links %}
+      <ul class="writer-links">
+        {% for link in links %}
+          {# nofollow ugc: these are contributor-supplied and must not pass rank. #}
+          <li><a href="{{ link.url }}" rel="nofollow ugc noopener" target="_blank">{{ link.label }}</a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+</aside>
+{% endmacro %}

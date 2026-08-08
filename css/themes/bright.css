@@ -1,0 +1,20 @@
+/* bright — lifehackerguru.com: clean white, punchy orange, friendly sans. */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&family=Open+Sans:wght@400;600&display=swap');
+
+:root {
+  --bg: #ffffff;
+  --surface: #f7f8fa;
+  --text: #24292f;
+  --muted: #67707b;
+  --accent: #f2620f;
+  --accent-contrast: #ffffff;
+  --border: #e4e7eb;
+  --font-body: 'Open Sans', system-ui, sans-serif;
+  --font-heading: 'Nunito', system-ui, sans-serif;
+  --radius: 12px;
+  --header-bg: #ffffff;
+  --header-text: #24292f;
+}
+
+.card-category { background: #fdeadd; padding: 0.15rem 0.6rem; border-radius: 999px; }
+.hero-title { font-weight: 800; }
