@@ -1,0 +1,135 @@
+name: Bump consumer pins
+
+# fleet-ui is not deployed anywhere. It reaches production by being pinned as a
+# submodule in the sites that use it, so "shipping" a change here means opening
+# a pull request in each consumer that moves its pin.
+#
+# Deliberately a PR and not a direct commit. A CSS change is still a change to
+# two live sites, and pushing it straight to their main branches would be the
+# one path into production with no tests and no review anywhere along it. The
+# PRs it opens run each consumer's own test suite and get the same AI review as
+# anything else.
+#
+# Requires: FLEET_PIN_TOKEN — a fine-grained PAT with Contents: write and
+# Pull requests: write on mpgray/articles-ai and mpgray/game-db. The default
+# GITHUB_TOKEN cannot do this: it is scoped to this repository only.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: bump-consumers
+  cancel-in-progress: true
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    strategy:
+      # One PR per consumer, and one failing consumer must not stop the other.
+      matrix:
+        consumer: [articles-ai, game-db]
+      fail-fast: false
+
+    steps:
+      - name: Check out this commit
+        uses: actions/checkout@v4
+        with:
+          path: fleet-ui
+
+      - name: Check out ${{ matrix.consumer }}
+        uses: actions/checkout@v4
+        with:
+          repository: mpgray/${{ matrix.consumer }}
+          token: ${{ secrets.FLEET_PIN_TOKEN }}
+          path: consumer
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Move the pin
+        id: bump
+        working-directory: consumer
+        run: |
+          set -euo pipefail
+          NEW="$(git -C ../fleet-ui rev-parse HEAD)"
+          OLD="$(git -C vendor/fleet-ui rev-parse HEAD)"
+
+          if [ "$OLD" = "$NEW" ]; then
+            echo "already pinned to ${NEW:0:12}"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git -C vendor/fleet-ui fetch --quiet origin
+          git -C vendor/fleet-ui checkout --quiet "$NEW"
+
+          {
+            echo 'log<<EOF'
+            git -C ../fleet-ui log --oneline "$OLD..$NEW" | sed 's/^/  /'
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+          echo "old=${OLD:0:12}" >> "$GITHUB_OUTPUT"
+          echo "new=${NEW:0:12}" >> "$GITHUB_OUTPUT"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Open the pull request
+        if: steps.bump.outputs.changed == 'true'
+        working-directory: consumer
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_PIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          BRANCH="fleet-ui/${{ steps.bump.outputs.new }}"
+          git config user.name  'fleet-ui bump'
+          git config user.email 'actions@github.com'
+
+          # Reuse the branch if this workflow already ran for this commit —
+          # a re-run should update the existing PR, not fail on a duplicate.
+          git checkout -B "$BRANCH"
+          git add vendor/fleet-ui
+          git commit -m "Bump fleet-ui to ${{ steps.bump.outputs.new }}
+
+          ${{ steps.bump.outputs.log }}
+
+          Opened by fleet-ui/.github/workflows/bump-consumers.yml. Structural CSS
+          and the shared macros live in one repo and are pinned by SHA in each
+          consumer; this is the pin moving. Until both consumers are on the same
+          commit the admin dashboard reports the two sites as drifted, which is
+          the alarm working rather than a fault."
+          git push --force-with-lease origin "$BRANCH"
+
+          if gh pr view "$BRANCH" >/dev/null 2>&1; then
+            echo "pull request already open for $BRANCH — updated in place"
+            exit 0
+          fi
+
+          gh pr create \
+            --title "Bump fleet-ui to ${{ steps.bump.outputs.new }}" \
+            --body "$(cat <<BODY
+          Moves the pinned shared-UI commit from \`${{ steps.bump.outputs.old }}\` to \`${{ steps.bump.outputs.new }}\`.
+
+          ### fleet-ui commits in this range
+          \`\`\`
+          ${{ steps.bump.outputs.log }}
+          \`\`\`
+
+          ### Why this is a pull request
+          fleet-ui is not deployed. It reaches production through this pin, so
+          this is the only point at which a change to shared CSS or a shared
+          macro is reviewed and tested against the site that renders it.
+
+          ### What to check
+          - The consumer's own tests pass — several of them assert on markup
+            these macros produce.
+          - The other consumer has an identical PR. Merging one and not the
+            other is what the drift alarm on the admin dashboard is for, and it
+            will fire until both are on the same commit.
+
+          ### Risk
+          Visual. Nothing here changes behaviour, and nothing here is covered by
+          a screenshot test, so a bad merge looks like a page that renders in
+          the wrong colours rather than a page that errors.
+          BODY
+          )" \
+            --label fleet-ui

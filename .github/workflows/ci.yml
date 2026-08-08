@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jinja2 tinycss2
+
+      # Every consumer renders these templates. A syntax error here does not
+      # break this repo — it breaks two sites at once, at the moment someone
+      # bumps a pin, which is a long way from the change that caused it.
+      - name: Templates parse
+        run: |
+          python - <<'PY'
+          import pathlib, sys
+          from jinja2 import Environment, FileSystemLoader
+          env = Environment(loader=FileSystemLoader('templates'))
+          failed = []
+          for path in pathlib.Path('templates').rglob('*.html'):
+              name = str(path.relative_to('templates'))
+              try:
+                  env.get_template(name)
+              except Exception as exc:
+                  failed.append(f'{name}: {exc}')
+          for line in failed:
+              print('FAIL', line)
+          print(f'{len(list(pathlib.Path("templates").rglob("*.html")))} templates parsed')
+          sys.exit(1 if failed else 0)
+          PY
+
+      - name: CSS parses
+        run: |
+          python - <<'PY'
+          import pathlib, sys, tinycss2
+          failed = []
+          for path in pathlib.Path('css').rglob('*.css'):
+              rules, err = tinycss2.parse_stylesheet_bytes(path.read_bytes())
+              errors = [r for r in rules if r.type == 'error']
+              for e in errors:
+                  failed.append(f'{path}:{e.source_line} {e.message}')
+          for line in failed:
+              print('FAIL', line)
+          sys.exit(1 if failed else 0)
+          PY
+
+      # The contract between site.css and the theme presets: structural CSS may
+      # only use variables every preset defines. A var() with no declaration
+      # renders as nothing and the failure is a colour that silently vanishes on
+      # one site — which is exactly the drift this repo exists to prevent.
+      - name: Every token used is declared by every theme
+        run: |
+          python - <<'PY'
+          import pathlib, re, sys
+          used = set(re.findall(r'var\(\s*(--[\w-]+)', pathlib.Path('css/site.css').read_text()))
+          failed = False
+          for theme in sorted(pathlib.Path('css/themes').glob('*.css')):
+              declared = set(re.findall(r'^\s*(--[\w-]+)\s*:', theme.read_text(), re.M))
+              missing = used - declared
+              if missing:
+                  failed = True
+                  print(f'FAIL {theme.name} does not declare: {", ".join(sorted(missing))}')
+          print(f'{len(used)} tokens used by site.css')
+          sys.exit(1 if failed else 0)
+          PY

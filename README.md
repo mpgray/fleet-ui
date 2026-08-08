@@ -102,3 +102,20 @@ Left as-is so the initial extraction stays byte-identical. Fix these once
 # fleet-ui
 # fleet-ui
 # fleet-ui
+
+## CI and shipping
+
+`ci.yml` parses every template and stylesheet, and checks that **every CSS
+variable `site.css` uses is declared by every theme preset**. A `var()` with no
+declaration renders as nothing, so the failure is a colour that silently
+vanishes on one site — exactly the drift this repo exists to prevent, and not
+something anyone notices from a diff.
+
+Nothing here is deployed. A merge to `main` opens a pin-bump pull request in
+`articles-ai` and `game-db` instead. That PR runs each consumer's own test
+suite and gets its own review, which makes it the only point at which a change
+to shared CSS is tested against a site that renders it. Merging one consumer's
+PR and not the other's is what the drift alarm on the admin dashboard is for.
+
+Requires `FLEET_PIN_TOKEN` (a PAT with write access to both consumers) and
+`ANTHROPIC_API_KEY`. See `articles-ai/PIPELINE.md`.

@@ -1,0 +1,104 @@
+name: Code health
+
+# A weekly look at the repository as a whole, which no per-PR review can give
+# you. A PR review sees a diff; it cannot see that a helper has had no callers
+# for two months, that two modules have drifted into different conventions for
+# the same thing, or that a pinned source has gone stale.
+#
+# Writes to ONE issue and keeps updating it. A tool that opens a new issue every
+# week is a tool you mute after three weeks.
+#
+# Requires: ANTHROPIC_API_KEY
+
+on:
+  schedule:
+    # Mondays, 06:00 UTC — before the week's work rather than after it.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install jinja2 tinycss2
+
+      # Facts first, so the model is reading measurements rather than forming
+      # impressions. Anything mechanically checkable should be checked
+      # mechanically — it is cheaper and it cannot be wrong.
+      - name: Collect the measurable things
+        run: |
+          {
+            echo '## Tokens used by site.css'
+            grep -o 'var(--[a-z-]*)' css/site.css | sort -u
+            echo
+            echo '## Selectors per stylesheet'
+            for f in css/site.css css/themes/*.css; do
+              printf '%s %s\n' "$(grep -c '{' "$f")" "$f"
+            done | sort -rn
+            echo
+            echo '## Consumers pinned at'
+            echo '(checked by the bump workflow, not here)'
+            echo
+            echo '## Churn, last 90 days'
+            git log --since=90.days --name-only --format= -- css templates \
+              | grep -v '^$' | sort | uniq -c | sort -rn
+          } > /tmp/health.txt 2>&1
+          cat /tmp/health.txt
+
+      - uses: anthropics/claude-code-action@v1
+        continue-on-error: true
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: --max-turns 30 --allowedTools "Bash(git log:*),Bash(git grep:*),Bash(gh issue:*),Read,Grep,Glob"
+          prompt: |
+            Audit the health of ${{ github.repository }} and record it in a
+            single GitHub issue titled exactly "Code health".
+
+            Measurements already collected are in /tmp/health.txt — read that
+            first. Do not re-derive anything it already answers.
+
+            Find the issue with `gh issue list --search "Code health" --state
+            open`. If it exists, edit its body with `gh issue edit`; only create
+            one if there is none. One issue, rewritten each week — not a new one
+            every Monday.
+
+            This repository is shared CSS, theme presets and Jinja macros for
+            every site in the fleet. Nothing here is deployed directly; it
+            reaches production by being pinned as a submodule. Look for:
+
+              * selectors and macros nothing in any consumer uses — this is the
+                repo where dead code is hardest to notice, because the callers
+                are in other repositories
+              * a theme preset that has drifted from the others: a token
+                declared by nine themes and not the tenth renders as nothing
+              * hardcoded colours, fonts or spacing in site.css that should be
+                tokens, since those are exactly what cannot be themed
+              * anything in site.css that is specific to one consumer's markup
+                and therefore does not belong here
+              * accessibility regressions: colour pairs with too little
+                contrast, focus styles removed, interactive targets under 44px
+
+            Write the issue as:
+
+              * a two-line summary: is this repository in good shape or not
+              * findings, most important first, each with the file and a
+                one-sentence statement of what it costs to leave alone
+              * a short "fixed since last week" section if you can tell from
+                git log that a previous finding is resolved
+
+            Be selective. Ten findings nobody acts on is worse than three
+            somebody does. If the repository is genuinely in good shape, say
+            that plainly and keep the issue short — an audit that always finds
+            something is an audit nobody believes.
