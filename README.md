@@ -12,9 +12,20 @@ to change it in two places?* No. You change it here, once.
 ```
 css/site.css          structural styles — layout, header, cards, article body
 css/themes/*.css      one file per theme preset; each defines the token block
-templates/macros/     cards.html (article_card, byline, avatar), icons.html
+templates/macros/     icons.html — icon(name) -> <svg><use href="#icon-name">
 templates/partials/   icon_sprite.html — self-hosted inline SVG sprite
 ```
+
+### What does *not* belong here
+
+Presentation is shared; **domain macros are not**. `article_card`, `byline` and
+`writer_box` take article/author/writer dicts that exist only in `articles-ai`,
+so they live there. A game database writes its own `entity_card` against the
+same `.card` classes.
+
+The test: if a macro's parameters name a concept only one consumer has, it is
+not fleet code. Getting this wrong is expensive in a specific way — a blog
+byline tweak would force a pin bump in every unrelated consumer.
 
 ## The token contract
 
