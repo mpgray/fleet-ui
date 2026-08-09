@@ -1,81 +1,37 @@
 {#
   The collapsing header.
 
-  Two macros that have to agree with each other and with .nav-toggle in
-  site.css, so they live together here rather than being hand-written once per
-  repo. Every site in the fleet has the same header shape — brand, search form,
-  nav — and the same problem with it on a phone.
+  Usage, inside .header-inner, in this order:
 
-  Usage, in <head>:      {{ js_flag() }}
-  Usage, in the header:  <div class="container header-inner"> … {{ nav_toggle() }}
-                         <nav class="site-nav" id="site-nav"> … </nav> </div>
-  Usage, before </body>: {{ nav_toggle_script() }}
+      <a class="site-brand"> … </a>
+      {{ nav_toggle() }}
+      <form class="search-form"> … </form>
+      <nav class="site-nav" id="site-nav"> … </nav>
 
-  The nav element must carry id="site-nav" — nav_toggle() points aria-controls
-  at it, and the script finds the header from the button rather than the nav,
-  so a missing id costs the screen-reader relationship, not the behaviour.
+  **The order is load-bearing.** The checkbox reveals the search form and the
+  nav through the sibling combinator (`~`), which only reaches elements that
+  come after it inside the same parent. Move it after the nav and the menu
+  silently stops opening.
+
+  No JavaScript. The first version of this toggled a class from a script and
+  shipped a hamburger that rendered and then did nothing — a control that needs
+  a script to function has a failure mode where it is visible, looks
+  interactive, and is not. A checkbox has no such state: the browser toggles
+  `:checked` itself, so "the script did not run" cannot happen.
 #}
 
-{#
-  Marks that scripting is on, so CSS can collapse the nav.
-
-  This belongs in <head>, above the stylesheet links. Two reasons it is here
-  and not at the end of <body>: the collapsed header must be in the first
-  paint or the menu visibly snaps shut after load, and a browser that never
-  runs this keeps the old always-open header instead of being left with a
-  toggle button that cannot toggle.
-#}
-{% macro js_flag() %}<script>document.documentElement.classList.add('js')</script>{% endmacro %}
-
-
-{#
-  The hamburger. A real <button> rather than the label-and-checkbox trick,
-  because aria-expanded is the whole accessible contract here and a checkbox
-  cannot express it.
-#}
 {% macro nav_toggle(label='Menu') %}
-  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+  {#
+    The checkbox is the state and is never display:none — that would take it out
+    of the tab order and make the menu keyboard-unreachable. It is clipped
+    instead, so it stays focusable and Space still opens the menu.
+
+    The <label> is the accessible name for the checkbox, which is why the text
+    lives inside it rather than in an aria-label on the input.
+  #}
+  <input class="nav-checkbox" type="checkbox" id="nav-toggle">
+  <label class="nav-toggle" for="nav-toggle">
     <span class="nav-toggle-bars" aria-hidden="true"></span>
     <span class="visually-hidden">{{ label }}</span>
-  </button>
-{% endmacro %}
-
-
-{% macro nav_toggle_script() %}
-<script>
-(function () {
-  var button = document.querySelector('.nav-toggle');
-  if (!button) return;
-  var header = button.closest('.header-inner');
-  if (!header) return;
-
-  function setOpen(open) {
-    button.setAttribute('aria-expanded', open ? 'true' : 'false');
-    header.classList.toggle('is-open', open);
-  }
-
-  button.addEventListener('click', function () {
-    setOpen(button.getAttribute('aria-expanded') !== 'true');
-  });
-
-  // Escape closes it, and focus goes back to the control that opened it —
-  // otherwise a keyboard user who dismisses the menu is left at the top of
-  // the document with nothing focused.
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape' && button.getAttribute('aria-expanded') === 'true') {
-      setOpen(false);
-      button.focus();
-    }
-  });
-
-  // The breakpoint can be crossed by rotating a phone or resizing a window.
-  // The nav is display:none only inside the media query, so leaving is-open
-  // set is harmless above it — but coming back down would then reveal an open
-  // menu the reader never asked for.
-  var collapsed = window.matchMedia('(max-width: 820px)');
-  var onChange = function (event) { if (!event.matches) setOpen(false); };
-  if (collapsed.addEventListener) collapsed.addEventListener('change', onChange);
-  else collapsed.addListener(onChange);
-})();
-</script>
+  </label>
 {% endmacro %}

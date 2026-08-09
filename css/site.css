@@ -40,13 +40,17 @@ img { max-width: 100%; height: auto; }
 .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; }
 
 /* ── Header ─────────────────────────────────────────────────────────────
-   The header is a thing you look past, not at, and it was not sized that way:
-   a 5rem logo inside 1.05rem of padding, then a search form and a wrapping row
-   of nav pills. On a phone those three stacked into roughly half the viewport
-   before any content appeared. On desktop it merely wasted a band of space.
+   Sized to be looked past. It was a 5rem logo inside 1.05rem of padding, then
+   a search form and a wrapping row of nav pills — on a phone, roughly half the
+   viewport before any content; on desktop, a wasted band.
 
-   Below the collapse breakpoint the search form and nav hide behind a toggle,
-   leaving one compact row. See .nav-toggle for why that is gated on html.js. */
+   The cost is vertical, so that is what is cut: the logo, the vertical padding
+   and — the one that actually made it tall — the ROW gap. These items wrap
+   onto two or three lines, and a symmetric `gap` paid the same generous space
+   between the rows as between the items. Row and column gaps are now set
+   separately, and the row gap is small.
+
+   Below 820px the search form and nav collapse behind the hamburger. */
 .site-header {
   position: sticky;
   top: 0;
@@ -55,43 +59,60 @@ img { max-width: 100%; height: auto; }
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(14px);
 }
-.header-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem; padding: 0.7rem 1.25rem; }
-.site-brand { text-decoration: none; display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
-.site-brand-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-.site-logo { height: 3.1rem; width: auto; border-radius: calc(var(--radius) / 2); }
-.site-title { font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; color: var(--header-text); line-height: 1.2; }
-.site-tagline { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
-.site-nav { margin-left: auto; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+.header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 0.25rem;
+  column-gap: 0.9rem;
+  padding: 0.4rem 1.25rem;
+}
+.site-brand { text-decoration: none; display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
+.site-brand-text { display: flex; flex-direction: column; min-width: 0; }
+.site-logo { height: 2.4rem; width: auto; border-radius: calc(var(--radius) / 2); }
+.site-title { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--header-text); line-height: 1.25; }
+.site-tagline { font-size: 0.72rem; color: var(--muted); line-height: 1.2; }
+.site-nav { margin-left: auto; display: flex; flex-wrap: wrap; row-gap: 0.15rem; column-gap: 0.25rem; align-items: center; }
 .site-nav a {
   color: var(--header-text);
   text-decoration: none;
-  font-size: 0.92rem;
-  padding: 0.35rem 0.7rem;
+  font-size: 0.88rem;
+  padding: 0.28rem 0.6rem;
   border-radius: 999px;
-  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 .site-nav a:hover {
   color: var(--accent-contrast);
   background: var(--accent);
-  transform: translateY(-1px);
 }
-.search-form { display: flex; align-items: center; gap: 0.4rem; }
-.search-form .input { padding: 0.4rem 0.75rem; font-size: 0.85rem; width: 11rem; }
-.search-form .btn { padding: 0.45rem 0.7rem; }
+.search-form { display: flex; align-items: center; gap: 0.35rem; }
+.search-form .input { padding: 0.3rem 0.65rem; font-size: 0.85rem; width: 10rem; }
+.search-form .btn { padding: 0.3rem 0.6rem; }
 
-/* The hamburger. Hidden here and shown only under `html.js` at the collapse
-   breakpoint, because collapsing the nav is only safe once something can
-   re-open it: with the class set by an inline <head> script, a browser that
-   never runs it keeps the old always-open wrapping header instead of being
-   left with a button that does nothing. Setting it in <head> also means the
-   collapsed state is in the first paint — no flash of an open menu. */
+/* ── The hamburger ──────────────────────────────────────────────────────
+   A checkbox, not a script. The previous version toggled a class from
+   JavaScript and shipped a control that rendered, looked interactive, and did
+   nothing — a failure mode a checkbox does not have, because the browser
+   toggles :checked itself.
+
+   The reveal below uses `~`, so .nav-checkbox must come BEFORE .search-form
+   and .site-nav in the markup. See macros/header.html. */
+.nav-checkbox {
+  /* Clipped, never display:none — that would drop it out of the tab order and
+     make the menu unreachable by keyboard. This keeps Space working. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
 .nav-toggle {
   display: none;
   margin-left: auto;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.4rem;
+  height: 2.4rem;
   padding: 0;
   background: transparent;
   color: var(--header-text);
@@ -113,27 +134,64 @@ img { max-width: 100%; height: auto; }
 .nav-toggle-bars::after { content: ''; position: absolute; left: 0; }
 .nav-toggle-bars::before { top: -6px; }
 .nav-toggle-bars::after { top: 6px; }
-.nav-toggle[aria-expanded='true'] {
+.nav-checkbox:checked + .nav-toggle {
   background: var(--accent);
   color: var(--accent-contrast);
   border-color: var(--accent);
 }
+/* The checkbox is invisible, so its focus ring has to be drawn on the label. */
+.nav-checkbox:focus-visible + .nav-toggle {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 @media (max-width: 820px) {
-  .site-logo { height: 2.4rem; }
-  .site-title { font-size: 1.15rem; }
-  /* The tagline is in <title> and the meta description already; in a collapsed
-     header it is the first thing worth its row back. */
+  /* Already in <title> and the meta description; in a collapsed header it is
+     the first thing worth its row back. */
   .site-tagline { display: none; }
 
-  html.js .nav-toggle { display: inline-flex; }
-  html.js .search-form,
-  html.js .site-nav { display: none; }
-  /* Both reappear on their own full-width rows, so the open menu is a stack
-     rather than the same wrap that made the closed header tall. */
-  html.js .header-inner.is-open .search-form,
-  html.js .header-inner.is-open .site-nav { display: flex; flex-basis: 100%; margin-left: 0; }
-  html.js .header-inner.is-open .search-form .input { flex: 1; width: auto; }
+  .nav-toggle { display: inline-flex; }
+  .search-form,
+  .site-nav { display: none; }
+
+  /* Open: a panel under the header, not a second row of pills. Full-width
+     stacked rows with real tap targets — what a mobile menu looks like
+     everywhere else. The header grows to hold it rather than the panel
+     overlaying the page: an overlay needs a stacking context and a scroll
+     lock to behave, and neither is worth it for a list of six links. */
+  .nav-checkbox:checked ~ .search-form,
+  .nav-checkbox:checked ~ .site-nav {
+    display: flex;
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+  .nav-checkbox:checked ~ .search-form {
+    order: 1;
+    padding-top: 0.5rem;
+  }
+  .nav-checkbox:checked ~ .search-form .input { flex: 1; width: auto; }
+
+  .nav-checkbox:checked ~ .site-nav {
+    order: 2;
+    flex-direction: column;
+    align-items: stretch;
+    row-gap: 0;
+    padding: 0.4rem 0 0.2rem;
+    border-top: 1px solid var(--border);
+    margin-top: 0.5rem;
+  }
+  .nav-checkbox:checked ~ .site-nav a {
+    padding: 0.65rem 0.5rem;
+    font-size: 0.98rem;
+    border-radius: var(--radius);
+  }
+  /* The cross-site links are outlined pills at desktop width; as full-width
+     rows that outline reads as a text field, so it becomes a rule instead. */
+  .nav-checkbox:checked ~ .site-nav .fleet-link {
+    border: none;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+  }
 }
 
 /* ── Fleet cross-links (macros/fleet.html) ──────────────────────────────
@@ -182,17 +240,23 @@ img { max-width: 100%; height: auto; }
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 .hero-link-media {
-  grid-template-columns: 13rem minmax(0, 1fr);
+  grid-template-columns: 9rem minmax(0, 1fr);
   align-items: center;
-  gap: 1.35rem;
+  gap: 1.1rem;
 }
 .hero-link:hover {
   transform: translateY(-3px);
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.1);
   border-color: var(--accent);
 }
+/* A hard ceiling in absolute units, not only a ratio. An aspect-ratio alone
+   still scales with the column, which is how this stayed overpowering after
+   being "made smaller" once already. max-height means it cannot dominate the
+   page whatever the column does. */
 .hero-image {
   width: 100%;
+  max-width: 9rem;
+  max-height: 7rem;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: var(--radius);
@@ -209,10 +273,12 @@ img { max-width: 100%; height: auto; }
 }
 
 @media (max-width: 720px) {
-  /* Stacked, but capped: the point of the change is that the lead image never
-     owns a whole screen, and 4/3 at full phone width would do exactly that. */
-  .hero-link-media { grid-template-columns: minmax(0, 1fr); }
-  .hero-image { aspect-ratio: 16 / 9; max-height: 12rem; }
+  /* Still side by side on a phone, just narrower. Stacking it put a
+     full-width image back above the headline, which is the thing being
+     removed. */
+  .hero-link-media { grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.9rem; }
+  .hero-image { max-width: 6.5rem; max-height: 5rem; }
+  .hero-link { padding: 0.8rem; }
 }
 
 /* ── Home: content column + skim rail ───────────────────────────────────
