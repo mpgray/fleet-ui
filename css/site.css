@@ -39,7 +39,14 @@ img { max-width: 100%; height: auto; }
 
 .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; }
 
-/* ── Header ─────────────────────────────────────────────────────────── */
+/* ── Header ─────────────────────────────────────────────────────────────
+   The header is a thing you look past, not at, and it was not sized that way:
+   a 5rem logo inside 1.05rem of padding, then a search form and a wrapping row
+   of nav pills. On a phone those three stacked into roughly half the viewport
+   before any content appeared. On desktop it merely wasted a band of space.
+
+   Below the collapse breakpoint the search form and nav hide behind a toggle,
+   leaving one compact row. See .nav-toggle for why that is gated on html.js. */
 .site-header {
   position: sticky;
   top: 0;
@@ -48,18 +55,18 @@ img { max-width: 100%; height: auto; }
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(14px);
 }
-.header-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 1.05rem 1.25rem; }
-.site-brand { text-decoration: none; display: flex; align-items: center; gap: 0.65rem; }
-.site-brand-text { display: flex; flex-direction: column; gap: 0.15rem; }
-.site-logo { height: 5rem; width: auto; border-radius: calc(var(--radius) / 2); }
-.site-title { font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700; color: var(--header-text); }
-.site-tagline { font-size: 0.8rem; color: var(--muted); }
-.site-nav { margin-left: auto; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+.header-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem; padding: 0.7rem 1.25rem; }
+.site-brand { text-decoration: none; display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.site-brand-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.site-logo { height: 3.1rem; width: auto; border-radius: calc(var(--radius) / 2); }
+.site-title { font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; color: var(--header-text); line-height: 1.2; }
+.site-tagline { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
+.site-nav { margin-left: auto; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
 .site-nav a {
   color: var(--header-text);
   text-decoration: none;
   font-size: 0.92rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 999px;
   transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
@@ -71,6 +78,63 @@ img { max-width: 100%; height: auto; }
 .search-form { display: flex; align-items: center; gap: 0.4rem; }
 .search-form .input { padding: 0.4rem 0.75rem; font-size: 0.85rem; width: 11rem; }
 .search-form .btn { padding: 0.45rem 0.7rem; }
+
+/* The hamburger. Hidden here and shown only under `html.js` at the collapse
+   breakpoint, because collapsing the nav is only safe once something can
+   re-open it: with the class set by an inline <head> script, a browser that
+   never runs it keeps the old always-open wrapping header instead of being
+   left with a button that does nothing. Setting it in <head> also means the
+   collapsed state is in the first paint — no flash of an open menu. */
+.nav-toggle {
+  display: none;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: transparent;
+  color: var(--header-text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.nav-toggle-bars { position: relative; }
+.nav-toggle-bars,
+.nav-toggle-bars::before,
+.nav-toggle-bars::after {
+  display: block;
+  width: 1.15rem;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.nav-toggle-bars::before,
+.nav-toggle-bars::after { content: ''; position: absolute; left: 0; }
+.nav-toggle-bars::before { top: -6px; }
+.nav-toggle-bars::after { top: 6px; }
+.nav-toggle[aria-expanded='true'] {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+}
+
+@media (max-width: 820px) {
+  .site-logo { height: 2.4rem; }
+  .site-title { font-size: 1.15rem; }
+  /* The tagline is in <title> and the meta description already; in a collapsed
+     header it is the first thing worth its row back. */
+  .site-tagline { display: none; }
+
+  html.js .nav-toggle { display: inline-flex; }
+  html.js .search-form,
+  html.js .site-nav { display: none; }
+  /* Both reappear on their own full-width rows, so the open menu is a stack
+     rather than the same wrap that made the closed header tall. */
+  html.js .header-inner.is-open .search-form,
+  html.js .header-inner.is-open .site-nav { display: flex; flex-basis: 100%; margin-left: 0; }
+  html.js .header-inner.is-open .search-form .input { flex: 1; width: auto; }
+}
 
 /* ── Fleet cross-links (macros/fleet.html) ──────────────────────────────
    A link to a sibling site leaves this hostname, so it is drawn differently
@@ -97,8 +161,14 @@ img { max-width: 100%; height: auto; }
 .guide-link:hover { color: var(--accent); text-decoration: underline; }
 .guide-summary { margin: 0.3rem 0 0; font-size: 0.9rem; color: var(--muted); }
 
-/* ── Hero ───────────────────────────────────────────────────────────── */
-.hero { margin: 2rem 0 2.5rem; }
+/* ── Hero ───────────────────────────────────────────────────────────────
+   The image sits beside the headline, not above it. Full-bleed at 18/8 it was
+   about 490px tall on an 1100px page, so the entire first screen was one
+   article's photograph and the grid of everything else began below the fold.
+   A thumbnail still tells you the lead has a picture; it just stops being the
+   page. .hero-link-media is set by the template only when there is an image —
+   without it the single text child would be laid into the image column. */
+.hero { margin: 1.5rem 0 2rem; }
 .hero-link {
   display: grid;
   gap: 1rem;
@@ -108,30 +178,79 @@ img { max-width: 100%; height: auto; }
   border-radius: calc(var(--radius) + 10px);
   text-decoration: none;
   color: inherit;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.07);
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.hero-link-media {
+  grid-template-columns: 13rem minmax(0, 1fr);
+  align-items: center;
+  gap: 1.35rem;
 }
 .hero-link:hover {
   transform: translateY(-3px);
-  box-shadow: 0 26px 54px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.1);
   border-color: var(--accent);
 }
 .hero-image {
   width: 100%;
-  aspect-ratio: 18 / 8;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: calc(var(--radius) + 6px);
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius);
 }
-.hero-text { padding: 0.15rem 0.3rem 0.3rem; }
-.hero-title { font-size: clamp(1.9rem, 4vw, 3rem); margin: 0.65rem 0 0.5rem; letter-spacing: -0.02em; }
-.hero-excerpt { color: var(--muted); font-size: 1.08rem; margin: 0; max-width: 68ch; }
+.hero-text { padding: 0.15rem 0.3rem 0.3rem; min-width: 0; }
+.hero-title { font-size: clamp(1.45rem, 2.6vw, 2.05rem); margin: 0.4rem 0 0.4rem; letter-spacing: -0.02em; }
+.hero-excerpt { color: var(--muted); font-size: 1rem; margin: 0; max-width: 68ch; }
 .hero-empty {
   text-align: center;
-  padding: 3.5rem 1rem;
+  padding: 2.5rem 1rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: calc(var(--radius) + 10px);
+}
+
+@media (max-width: 720px) {
+  /* Stacked, but capped: the point of the change is that the lead image never
+     owns a whole screen, and 4/3 at full phone width would do exactly that. */
+  .hero-link-media { grid-template-columns: minmax(0, 1fr); }
+  .hero-image { aspect-ratio: 16 / 9; max-height: 12rem; }
+}
+
+/* ── Home: content column + skim rail ───────────────────────────────────
+   The rail is titles only and holds articles that are not already in the grid
+   below it, so it adds reach rather than repeating what is on screen. It
+   collapses to a normal block under the aside breakpoint — sticky positioning
+   is dropped there too, or it would pin mid-scroll on a phone. */
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16rem;
+  gap: 2.25rem;
+  align-items: start;
+}
+.home-main { min-width: 0; }
+.home-aside { position: sticky; top: 5.5rem; }
+.aside-heading {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+.aside-list { list-style: none; margin: 0; padding: 0; }
+.aside-list li + li { border-top: 1px solid var(--border); }
+.aside-list a {
+  display: block;
+  padding: 0.6rem 0;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.92rem;
+  line-height: 1.42;
+}
+.aside-list a:hover { color: var(--accent); }
+.aside-meta { display: block; font-size: 0.74rem; color: var(--muted); margin-top: 0.15rem; }
+
+@media (max-width: 980px) {
+  .home-layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .home-aside { position: static; }
 }
 
 /* ── Cards ──────────────────────────────────────────────────────────── */
@@ -275,6 +394,18 @@ img { max-width: 100%; height: auto; }
 .newsletter-form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .newsletter-form .input { min-width: 14rem; }
 .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* Off-screen to the eye, present to a screen reader. Distinct from .hp-field,
+   which hides a honeypot from everyone including assistive tech. */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* ── Ads: reserve space so units don't shift the layout (CLS) ───────── */
 .ad-slot { min-height: 100px; margin: 1.5rem auto; text-align: center; }
