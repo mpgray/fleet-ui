@@ -35,10 +35,17 @@ permissions:
 env:
   ANTHROPIC_BASE_URL: ${{ vars.AI_BASE_URL || 'https://openrouter.ai/api' }}
   ANTHROPIC_AUTH_TOKEN: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
-  # Pinned EMPTY so nothing falls back to calling Anthropic directly. The
-  # preflight step proves which endpoint actually served the request, so this
-  # is belt and braces rather than an article of faith.
-  ANTHROPIC_API_KEY: ''
+  # The credential, sent as x-api-key. This was pinned to '' to stop anything
+  # falling back to Anthropic directly, but the empty value failed every run
+  # outright:
+  #
+  #   Environment variable validation failed: Either ANTHROPIC_API_KEY,
+  #   CLAUDE_CODE_OAUTH_TOKEN, or workload identity federation is required
+  #
+  # The action requires one of these and does not count ANTHROPIC_AUTH_TOKEN.
+  # The endpoint stays pinned by ANTHROPIC_BASE_URL above; if a request ever did
+  # reach Anthropic it would 401 on an OpenRouter key rather than pass quietly.
+  ANTHROPIC_API_KEY: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
 
 jobs:
   audit:
