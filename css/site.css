@@ -286,12 +286,17 @@ img { max-width: 100%; height: auto; }
    below it, so it adds reach rather than repeating what is on screen. It
    collapses to a normal block under the aside breakpoint — sticky positioning
    is dropped there too, or it would pin mid-scroll on a phone. */
+/* One column by default. The second is added by .home-layout-rail, which the
+   template sets only when there is a rail — the column used to be
+   unconditional while the rail was not, so a site without one rendered its
+   content off-centre beside a blank 16rem strip. */
 .home-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 16rem;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2.25rem;
   align-items: start;
 }
+.home-layout-rail { grid-template-columns: minmax(0, 1fr) 16rem; }
 .home-main { min-width: 0; }
 .home-aside { position: sticky; top: 5.5rem; }
 .aside-heading {
@@ -315,7 +320,8 @@ img { max-width: 100%; height: auto; }
 .aside-meta { display: block; font-size: 0.74rem; color: var(--muted); margin-top: 0.15rem; }
 
 @media (max-width: 980px) {
-  .home-layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .home-layout,
+  .home-layout-rail { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .home-aside { position: static; }
 }
 
