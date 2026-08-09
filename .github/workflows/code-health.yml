@@ -86,7 +86,16 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         continue-on-error: true
+        # The agent's prompts drive the `gh` CLI directly. Handing it the
+        # same token keeps those calls working without a second credential.
+        env:
+          GH_TOKEN: ${{ secrets.AGENT_PAT || secrets.GITHUB_TOKEN }}
         with:
+          # Without this the action falls back to OIDC to mint a token via
+          # the Claude GitHub App, which is not installed here, and the run
+          # dies with "Could not fetch an OIDC token". The workflow's own
+          # token already carries the permissions this job declares above.
+          github_token: ${{ secrets.AGENT_PAT || secrets.GITHUB_TOKEN }}
           claude_args: >-
             --model ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-sonnet-5' }}
             --max-turns 30
