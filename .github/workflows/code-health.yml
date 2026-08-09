@@ -8,7 +8,7 @@ name: Code health
 # Writes to ONE issue and keeps updating it. A tool that opens a new issue every
 # week is a tool you mute after three weeks.
 #
-# Requires: ANTHROPIC_API_KEY
+# Requires: OPENROUTER_API_KEY (or AI_GATEWAY_TOKEN + AI_BASE_URL)
 
 on:
   schedule:
@@ -19,6 +19,26 @@ on:
 permissions:
   contents: read
   issues: write
+
+# ── Which endpoint the agents talk to ─────────────────────────────────────
+# The ANTHROPIC_* names below are not ours and cannot be renamed: they are the
+# Claude Code CLI's own variables, and the CLI is what this action runs. They
+# name a protocol, not a vendor — ANTHROPIC_BASE_URL means "where the Messages
+# API lives", and here it is OpenRouter.
+#
+#   OpenRouter (default) — set the OPENROUTER_API_KEY secret, leave AI_BASE_URL unset.
+#   Anything else        — set AI_BASE_URL to its origin (no trailing /v1) and
+#                          AI_GATEWAY_TOKEN to its key.
+#
+# Model ids belong to whichever endpoint is selected, so the MODEL_* variables
+# move with AI_BASE_URL. See articles-ai/PIPELINE.md.
+env:
+  ANTHROPIC_BASE_URL: ${{ vars.AI_BASE_URL || 'https://openrouter.ai/api' }}
+  ANTHROPIC_AUTH_TOKEN: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
+  # Pinned EMPTY so nothing falls back to calling Anthropic directly. The
+  # preflight step proves which endpoint actually served the request, so this
+  # is belt and braces rather than an article of faith.
+  ANTHROPIC_API_KEY: ''
 
 jobs:
   audit:
@@ -57,11 +77,20 @@ jobs:
           } > /tmp/health.txt 2>&1
           cat /tmp/health.txt
 
+      - name: Preflight the AI endpoint
+        uses: ./.github/actions/ai-preflight
+        with:
+          base_url: ${{ vars.AI_BASE_URL || 'https://openrouter.ai/api' }}
+          token: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
+          model: ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-sonnet-5' }}
+
       - uses: anthropics/claude-code-action@v1
         continue-on-error: true
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          claude_args: --max-turns 30 --allowedTools "Bash(git log:*),Bash(git grep:*),Bash(gh issue:*),Read,Grep,Glob"
+          claude_args: >-
+            --model ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-sonnet-5' }}
+            --max-turns 30
+            --allowedTools "Bash(git log:*),Bash(git grep:*),Bash(gh issue:*),Read,Grep,Glob"
           prompt: |
             Audit the health of ${{ github.repository }} and record it in a
             single GitHub issue titled exactly "Code health".
