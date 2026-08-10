@@ -58,6 +58,22 @@ runs:
             return content if isinstance(content, list) else []
 
 
+        def what(name, inp):
+            """The tool plus the part of its input you would write a rule about.
+
+            "Bash refused twice" does not tell you what to allow; `Bash: echo`
+            does. For Bash that is the first word of the command, which is what
+            a `Bash(cmd:*)` rule matches on; for file tools it is the path.
+            """
+            if not isinstance(inp, dict):
+                return name
+            if name == 'Bash':
+                cmd = str(inp.get('command', '')).strip().split()
+                return '%s: %s' % (name, cmd[0]) if cmd else name
+            path = inp.get('file_path') or inp.get('path')
+            return '%s: %s' % (name, path) if path else name
+
+
         def report():
             p = pathlib.Path(
                 os.environ.get('LOG_PATH')
@@ -86,11 +102,11 @@ runs:
                     if not isinstance(b, dict):
                         continue
                     if b.get('type') == 'tool_use':
-                        names[b.get('id')] = b.get('name', '?')
+                        names[b.get('id')] = (b.get('name', '?'), b.get('input') or {})
                     elif b.get('type') == 'tool_result' and b.get('is_error'):
                         blob = json.dumps(b.get('content', ''))
                         if 'ermission' in blob or 'not allowed' in blob:
-                            denied[names.get(b.get('tool_use_id'), '?')] += 1
+                            denied[what(*names.get(b.get('tool_use_id'), ('?', {})))] += 1
 
             turns = result.get('num_turns')
             if isinstance(turns, int):
@@ -113,7 +129,7 @@ runs:
             if denied:
                 print('Each one cost a billed turn and produced nothing. Either add it '
                       'to `--allowedTools` or change the prompt to stop asking for it.\n')
-                print('| tool | times refused |')
+                print('| tool and what it asked for | times refused |')
                 print('|---|---|')
                 for n, c in denied.most_common():
                     print('| `%s` | %d |' % (n, c))
