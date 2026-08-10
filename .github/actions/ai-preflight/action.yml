@@ -53,6 +53,8 @@ runs:
           -H 'anthropic-version: 2023-06-01' \
           -H "x-api-key: $TOKEN" \
           -H "authorization: Bearer $TOKEN" \
+          -H "X-Title: ${GITHUB_REPOSITORY:-unknown} preflight" \
+          -H "HTTP-Referer: ${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-unknown}" \
           -d "{\"model\":\"$MODEL\",\"max_tokens\":1,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}" \
           || echo 000)
 

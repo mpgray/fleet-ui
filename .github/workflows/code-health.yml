@@ -12,7 +12,10 @@ name: Code health
 
 on:
   schedule:
-    # Mondays, 06:00 UTC — before the week's work rather than after it.
+    # Mondays, 06:00 UTC — before the week's work rather than after it. This is
+    # the only repo in the fleet still on 06:00; the others were staggered after
+    # 2026-08-10, when all three fired together and put five agent runs inside
+    # 46 minutes on one shared API key. Keep them apart.
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
@@ -32,6 +35,12 @@ permissions:
 #
 # Model ids belong to whichever endpoint is selected, so the MODEL_* variables
 # move with AI_BASE_URL. See articles-ai/PIPELINE.md.
+#
+# Every agent job here is gated on the AGENTS_ENABLED repository variable.
+# `gh variable set AGENTS_ENABLED --body off` stops all agent spend in this repo
+# immediately — no commit, no PR, no workflow edit. The brake has to live
+# somewhere an agent cannot reach. Anything other than the literal `off` —
+# including unset — leaves them enabled.
 env:
   ANTHROPIC_BASE_URL: ${{ vars.AI_BASE_URL || 'https://openrouter.ai/api' }}
   ANTHROPIC_AUTH_TOKEN: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
@@ -46,10 +55,28 @@ env:
   # The endpoint stays pinned by ANTHROPIC_BASE_URL above; if a request ever did
   # reach Anthropic it would 401 on an OpenRouter key rather than pass quietly.
   ANTHROPIC_API_KEY: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
+  # `--model` pins only the TOP-LEVEL model. Claude Code resolves the `opus`,
+  # `sonnet` and `haiku` aliases separately — subagents ask for them by name,
+  # `opusplan` uses opus while planning, and background traffic uses haiku — and
+  # when these three are empty each alias falls back to Anthropic's own default
+  # id. That is the hole: a job pinned to a cheap model can still emit an
+  # Opus-class request through an alias nobody chose. The 2026-08-10 runs logged
+  # all three as blank across all three repos. Point them at ids THIS endpoint
+  # serves, so there is no id in play that the MODEL_* variables did not select.
+  #
+  # Deliberately not set: FALLBACK_FOR_ALL_PRIMARY_MODELS. Any non-empty value,
+  # including the string "0", turns automatic primary-model fallback ON.
+  ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ vars.MODEL_ALIAS_OPUS || vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
+  ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ vars.MODEL_ALIAS_SONNET || vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
+  ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ vars.MODEL_ALIAS_HAIKU || vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
 
 jobs:
   audit:
     runs-on: ubuntu-latest
+    if: vars.AGENTS_ENABLED != 'off'
+    # The default ceiling is six hours. An agent that wedges — a retry storm, a
+    # loop on a refused tool — should cost a coffee, not a day.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,15 +108,15 @@ jobs:
             echo '## Churn, last 90 days'
             git log --since=90.days --name-only --format= -- css templates \
               | grep -v '^$' | sort | uniq -c | sort -rn
-          } > /tmp/health.txt 2>&1
-          cat /tmp/health.txt
+          } > health.txt 2>&1
+          cat health.txt
 
       - name: Preflight the AI endpoint
         uses: ./.github/actions/ai-preflight
         with:
           base_url: ${{ vars.AI_BASE_URL || 'https://openrouter.ai/api' }}
           token: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
-          model: ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-sonnet-5' }}
+          model: ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
 
       - uses: anthropics/claude-code-action@v1
         continue-on-error: true
@@ -97,21 +124,35 @@ jobs:
         # same token keeps those calls working without a second credential.
         env:
           GH_TOKEN: ${{ secrets.AGENT_PAT || secrets.GITHUB_TOKEN }}
+          # Labels every request this job makes, in OpenRouter's activity log.
+          # The point is the requests the GitHub log CANNOT show you: alias
+          # traffic, background calls, retries. A key tells you which repo; this
+          # tells you which job, which is the granularity you need to find a
+          # model id nobody selected.
+          ANTHROPIC_CUSTOM_HEADERS: |
+            X-Title: ${{ github.repository }} code-health/audit
+            HTTP-Referer: ${{ github.server_url }}/${{ github.repository }}
         with:
           # Without this the action falls back to OIDC to mint a token via
           # the Claude GitHub App, which is not installed here, and the run
           # dies with "Could not fetch an OIDC token". The workflow's own
           # token already carries the permissions this job declares above.
           github_token: ${{ secrets.AGENT_PAT || secrets.GITHUB_TOKEN }}
+          # --max-turns is a BACKSTOP, not a budget. It "exits with an error when
+          # the limit is reached", so a run that trips it has paid for every turn
+          # and produced nothing — lowering it does not lower spend, it raises
+          # the odds of paying full price for no result. It sits above what the
+          # job needs; the prompt is what lands the plane. timeout-minutes is
+          # the real runaway guard.
           claude_args: >-
-            --model ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-sonnet-5' }}
+            --model ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
             --max-turns 30
             --allowedTools "Bash(git log:*),Bash(git grep:*),Bash(gh issue:*),Read,Grep,Glob"
           prompt: |
             Audit the health of ${{ github.repository }} and record it in a
             single GitHub issue titled exactly "Code health".
 
-            Measurements already collected are in /tmp/health.txt — read that
+            Measurements already collected are in health.txt — read that
             first. Do not re-derive anything it already answers.
 
             Find the issue with `gh issue list --search "Code health" --state
@@ -147,3 +188,21 @@ jobs:
             somebody does. If the repository is genuinely in good shape, say
             that plainly and keep the issue short — an audit that always finds
             something is an audit nobody believes.
+
+            ## Your turn budget
+
+            You have a limited number of turns and running out is a hard error
+            that discards everything you have done. So treat the issue as the
+            deliverable, not the last step: once you have ONE finding you are
+            confident in, write the issue with just that, then edit it to add
+            more as you confirm them. An issue with two findings beats a perfect
+            audit that was never posted.
+
+            If a tool call is refused, do not retry it — that is a billed turn
+            spent for nothing. If you are running low, stop investigating and
+            write up what you have, naming what you did not get to.
+
+
+      - name: What this run spent
+        if: always()
+        uses: ./.github/actions/agent-cost-report
