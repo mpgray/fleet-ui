@@ -1,0 +1,150 @@
+name: Agent cost report
+description: Summarise what an agent run spent, and which of its billed turns were wasted on refused tool calls.
+
+# The result JSON an agent run prints reports `permission_denials_count` but
+# never says WHICH calls were refused — and a refused call still costs a full
+# billed turn. On 2026-08-10 the code-health audit spent ten of its twelve turns
+# that way, and game-db's fix job 33 of 51 before dying on the turn limit. The
+# counts were visible in the log; the causes were not, so the allowlists stayed
+# wrong.
+#
+# This reads the transcript the action leaves in RUNNER_TEMP and names the
+# offending tools in the step summary, where someone will actually see them.
+#
+# It also restates `total_cost_usd` with the caveat that belongs next to it: the
+# figure is a CLIENT-SIDE ESTIMATE, priced from a table keyed on the model id.
+# Point the workflows at a non-Anthropic id and the number is meaningless — it
+# read $6.37 for twelve turns of a GLM model. Only the provider's own dashboard
+# is the bill. A number that looks authoritative and is not causes worse
+# decisions than no number at all, so it is never printed bare.
+#
+# This step REPORTS. It must never be the reason a check goes red: the
+# transcript is a format we do not control and did not specify, so every access
+# into it is defensive and the whole parse sits under a catch-all. A reporting
+# step that fails the build teaches people to ignore the build.
+
+inputs:
+  log_path:
+    description: Transcript written by claude-code-action. Defaults to where it puts it.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        LOG_PATH: ${{ inputs.log_path }}
+      # `|| true` is the outer belt to the script's inner braces: even an
+      # unhandled crash, or a python3 that is somehow missing, leaves the job
+      # green. The summary says what went wrong either way.
+      run: |
+        python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY" || true
+        import collections, json, os, pathlib, traceback
+
+
+        def blocks(msg):
+            """Content blocks of one transcript entry, or nothing.
+
+            Entries are not uniform: `message` is a dict on assistant and user
+            turns but a bare string elsewhere, and `content` is a list of blocks
+            on tool turns and a plain string on text-only ones. Iterating a
+            string yields characters, so every level is checked rather than
+            assumed — this is what the 2026-08-10 version got wrong.
+            """
+            if not isinstance(msg, dict):
+                return []
+            content = msg.get('content')
+            return content if isinstance(content, list) else []
+
+
+        def what(name, inp):
+            """The tool plus the part of its input you would write a rule about.
+
+            "Bash refused twice" does not tell you what to allow; `Bash: echo`
+            does. For Bash that is the first word of the command, which is what
+            a `Bash(cmd:*)` rule matches on; for file tools it is the path.
+            """
+            if not isinstance(inp, dict):
+                return name
+            if name == 'Bash':
+                cmd = str(inp.get('command', '')).strip().split()
+                return '%s: %s' % (name, cmd[0]) if cmd else name
+            path = inp.get('file_path') or inp.get('path')
+            return '%s: %s' % (name, path) if path else name
+
+
+        def report():
+            p = pathlib.Path(
+                os.environ.get('LOG_PATH')
+                or pathlib.Path(os.environ['RUNNER_TEMP']) / 'claude-execution-output.json'
+            )
+            if not p.exists():
+                print('No transcript at `%s` — the agent never started, so nothing '
+                      'was spent.' % p)
+                return
+
+            try:
+                msgs = json.loads(p.read_text())
+            except (ValueError, OSError) as exc:
+                print('Could not read the transcript (`%s`): %s' % (p, exc))
+                return
+            if not isinstance(msgs, list):
+                msgs = [msgs]
+
+            names, denied, result = {}, collections.Counter(), {}
+            for m in msgs:
+                if not isinstance(m, dict):
+                    continue
+                if m.get('type') == 'result':
+                    result = m
+                for b in blocks(m.get('message')):
+                    if not isinstance(b, dict):
+                        continue
+                    if b.get('type') == 'tool_use':
+                        names[b.get('id')] = (b.get('name', '?'), b.get('input') or {})
+                    elif b.get('type') == 'tool_result' and b.get('is_error'):
+                        blob = json.dumps(b.get('content', ''))
+                        if 'ermission' in blob or 'not allowed' in blob:
+                            denied[what(*names.get(b.get('tool_use_id'), ('?', {})))] += 1
+
+            turns = result.get('num_turns')
+            if isinstance(turns, int):
+                wasted = sum(denied.values())
+                line = '%d turns' % turns
+                if wasted:
+                    line += ', **%d of them spent on refused tool calls**' % wasted
+                print(line + '.\n')
+
+            cost = result.get('total_cost_usd')
+            if isinstance(cost, (int, float)):
+                print(
+                    'Reported cost: $%.2f — a **client-side estimate**, priced from a '
+                    'table keyed on the model id. It is not the bill, and it is wrong '
+                    'by an unknown factor for any model the table does not know. Check '
+                    "the provider's dashboard before acting on it.\n" % cost
+                )
+
+            print('### Refused tool calls\n')
+            if denied:
+                print('Each one cost a billed turn and produced nothing. Either add it '
+                      'to `--allowedTools` or change the prompt to stop asking for it.\n')
+                print('| tool and what it asked for | times refused |')
+                print('|---|---|')
+                for n, c in denied.most_common():
+                    print('| `%s` | %d |' % (n, c))
+            else:
+                print('None — every tool the agent reached for was allowed.')
+
+
+        print('## Agent run\n')
+        try:
+            report()
+        except Exception:
+            # Deliberately broad. This step's job is to inform; a transcript
+            # shape we did not anticipate is worth a note in the summary, never
+            # a red check on somebody's pull request.
+            print('The cost report could not parse this run. The run itself is '
+                  'unaffected — only this summary is missing.\n')
+            print('```\n%s```' % traceback.format_exc())
+        PY

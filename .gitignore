@@ -1,1 +1,8 @@
 .DS_Store
+
+# Scratch the agent workflows write into the checkout: measurements for the
+# agent to read, and the working log it keeps as it goes. Both live in the
+# workspace because the agent's Read and Write tools are scoped to it — a /tmp
+# path is silently refused, which cost the 2026-08-10 runs most of their turns.
+health.txt
+agent-log/
