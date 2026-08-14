@@ -1,0 +1,109 @@
+/* tokens-bootstrap.css — the fleet's scales, expressed as Bootstrap variables.
+ *
+ * For the internal tools only: the admin panel and the writers' portal in
+ * `articles-ai` are Bootstrap 5.3 and are going to stay that way. Rewriting
+ * thirty-eight working templates off a framework buys nothing a reader of the
+ * blogs would ever see.
+ *
+ * What it does buy: those two tools currently pick their own type sizes,
+ * spacing and radii, so a contributor moving between the writers' portal and
+ * the site their work appears on is looking at two different rhythms. This
+ * file maps the scales from site.css onto the --bs-* variables Bootstrap
+ * already reads, so they share a rhythm without sharing a palette.
+ *
+ * They deliberately do NOT share a palette. The admin is dark and the writers'
+ * portal is light precisely so it is never ambiguous which one you are looking
+ * at — see the header comment in articles-ai/app/static/writer/writer.css.
+ * Nothing here sets a colour.
+ *
+ * Load order:
+ *   1. bootstrap.min.css
+ *   2. this file
+ *   3. admin.css / writer.css
+ *
+ * It is standalone by design — it does not read a theme preset and does not
+ * assume site.css is on the page, because neither of these tools loads either.
+ */
+
+:root {
+  /* Type — the same 1.2 scale off a 17px body that site.css uses. Bootstrap's
+     own default is 1rem with a 1.25 heading ratio, which is why admin headings
+     currently step wider than the public ones. */
+  --bs-body-font-size: 1.0625rem;
+  --bs-body-line-height: 1.65;
+
+  --fleet-step--2: 0.75rem;
+  --fleet-step--1: 0.875rem;
+  --fleet-step-0: 1.0625rem;
+  --fleet-step-1: 1.25rem;
+  --fleet-step-2: 1.5rem;
+  --fleet-step-3: 1.8125rem;
+  --fleet-step-4: 2.125rem;
+
+  /* Space — 4px base, same steps as site.css. */
+  --fleet-space-1: 0.25rem;
+  --fleet-space-2: 0.5rem;
+  --fleet-space-3: 0.75rem;
+  --fleet-space-4: 1rem;
+  --fleet-space-5: 1.5rem;
+  --fleet-space-6: 2rem;
+  --fleet-space-7: 3rem;
+
+  /* Radius. Bootstrap ships five steps; the fleet has two and a pill. Mapping
+     the extremes onto the same two values is the point — an admin card and a
+     public card should not disagree about how round a corner is. */
+  --bs-border-radius-sm: 0.25rem;
+  --bs-border-radius: 0.5rem;
+  --bs-border-radius-lg: 0.5rem;
+  --bs-border-radius-xl: 0.5rem;
+  --bs-border-radius-2xl: 0.5rem;
+  --bs-border-radius-pill: 999px;
+
+  --bs-border-width: 1px;
+}
+
+h1, .h1 { font-size: var(--fleet-step-4); }
+h2, .h2 { font-size: var(--fleet-step-3); }
+h3, .h3 { font-size: var(--fleet-step-2); }
+h4, .h4 { font-size: var(--fleet-step-1); }
+h5, .h5, h6, .h6 { font-size: var(--fleet-step-0); }
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.small, small { font-size: var(--fleet-step--1); }
+
+/* The eyebrow, same role as on the public sites: it labels a thing's kind
+   before its name. Used for table section headers and panel labels. */
+.eyebrow {
+  font-size: var(--fleet-step--2);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+/* Dates, token counts, costs and view counts all sit in columns in these two
+   tools, and proportional figures visibly ripple down a column. */
+.table td, .table th, time, .font-numeric { font-variant-numeric: tabular-nums; }
+
+/* Bootstrap's focus ring is a 0.25rem box-shadow in its own blue, which both
+   tools then partly override on .form-control. One visible ring, on everything,
+   matching the public sites' 2px outline. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

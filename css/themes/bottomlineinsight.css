@@ -1,4 +1,5 @@
-/* bottomlineinsight — bottomlineinsight.com: navy finance blue, understated green for gains. */
+/* bottomlineinsight — bottomlineinsight.com: navy finance blue, understated
+   green for gains. */
 @import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap');
 
 :root {
@@ -14,8 +15,14 @@
   --radius: 4px;
   --header-bg: #0f2647;
   --header-text: #f4f6f9;
+  --shadow-color: rgba(26, 39, 64, 0.16);
+  --rule-accent: 3px;
 }
 
-.site-header { border-bottom: 3px solid #1e7a4c; }
+/* The gains green. Deliberately NOT --accent: the navy is the brand and this
+   is a second, narrower signal, so it stays a literal here rather than
+   becoming a token every other preset would have to invent a meaning for.
+   #1e7a4c is 4.6:1 on --bg. */
+.site-header { border-bottom-color: #1e7a4c; }
 .author-quals, .tag { color: #1e7a4c; }
 .tag { border-color: rgba(30, 122, 76, 0.35); }

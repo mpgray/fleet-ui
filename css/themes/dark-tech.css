@@ -14,7 +14,11 @@
   --radius: 6px;
   --header-bg: #0e1219;
   --header-text: #e6ecf5;
+  /* Transparent on purpose. A drop shadow under a sticky header needs to be
+     darker than the page behind it, and there is nothing darker than #0b0e14
+     — so the border-coloured line inside --elev-1 does the whole job and the
+     blur is not painted. */
+  --shadow-color: transparent;
 }
 
-.card-category { font-family: 'JetBrains Mono', monospace; }
 .site-title::before { content: '~/'; color: var(--accent); }

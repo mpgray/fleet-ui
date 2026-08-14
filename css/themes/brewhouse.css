@@ -14,9 +14,11 @@
   --radius: 8px;
   --header-bg: #3a2a1d;
   --header-text: #faf6ef;
+  --shadow-color: rgba(43, 33, 24, 0.16);
+  --rule-accent: 4px;
 }
 
-.site-header { border-bottom: 4px solid var(--accent); }
-/* Recipes live in tables here, so give them room to breathe. */
-article table { width: 100%; }
-article table th { background: var(--surface); }
+/* The `article table` rules this file used to carry are gone: recipes are
+   tables, tables are wide, and wide content turned out to be a fleet problem
+   rather than this site's — site.css owns .stat-table and .article-body table
+   now, scroll container included. */
