@@ -37,6 +37,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: fleet-ui
+          # Full history, because "Move the pin" below runs
+          # `git log "$OLD..$NEW"` in here — and $OLD is the commit the consumer
+          # is currently pinned to, which in a default depth-1 clone does not
+          # exist. That made this workflow fail on every run it ever had: git
+          # errored, `set -e` aborted the block mid-heredoc, and the runner
+          # rejected a $GITHUB_OUTPUT file whose `log<<EOF` was never closed
+          # ("Invalid value. Matching delimiter not found 'EOF'"). Seven runs,
+          # seven failures, no pin ever bumped and no PR ever opened.
+          fetch-depth: 0
 
       - name: Check out ${{ matrix.consumer }}
         uses: actions/checkout@v4
@@ -64,10 +73,30 @@ jobs:
           git -C vendor/fleet-ui fetch --quiet origin
           git -C vendor/fleet-ui checkout --quiet "$NEW"
 
+          # Built into a variable FIRST, then written in one go. The previous
+          # version streamed `log<<EOF`, the git output and `EOF` straight into
+          # $GITHUB_OUTPUT — so a git failure under `set -e` left the heredoc
+          # open and the runner threw away the whole output file, taking the
+          # `changed` flag with it. A malformed output file is a much worse
+          # failure than a missing commit list: it loses the diagnosis too.
+          #
+          # `|| true` because the commit list is a courtesy for the reviewer,
+          # not the point of the job. Moving the pin is the point, and it should
+          # not be blocked by an unreachable revision.
+          LOG="$(git -C ../fleet-ui log --oneline "$OLD..$NEW" 2>/dev/null | sed 's/^/  /' || true)"
+          if [ -z "$LOG" ]; then
+            LOG="  (commit list unavailable — compare $OLD..$NEW in fleet-ui)"
+          fi
+
+          # A random delimiter, not the literal EOF. GitHub rejects the file if
+          # any line of the value equals the delimiter, and a commit subject
+          # that happens to be "EOF" is exactly the kind of thing that breaks
+          # once a year and is never diagnosed.
+          DELIM="log_$(openssl rand -hex 8)"
           {
-            echo 'log<<EOF'
-            git -C ../fleet-ui log --oneline "$OLD..$NEW" | sed 's/^/  /'
-            echo EOF
+            echo "log<<$DELIM"
+            echo "$LOG"
+            echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
           echo "old=${OLD:0:12}" >> "$GITHUB_OUTPUT"
           echo "new=${NEW:0:12}" >> "$GITHUB_OUTPUT"
@@ -78,9 +107,19 @@ jobs:
         working-directory: consumer
         env:
           GH_TOKEN: ${{ secrets.FLEET_PIN_TOKEN }}
+          # Through the environment, not `${{ }}` inside the script. NEW_LOG is
+          # a list of commit subjects from another repository, and GitHub
+          # expressions are substituted as raw text BEFORE bash sees the line —
+          # so a subject containing a backtick or $(...) was a command running
+          # on a runner that holds FLEET_PIN_TOKEN, a credential with write
+          # access to both consumers. Trusted-ish input, but nothing about the
+          # `env:` form costs anything.
+          NEW_SHA: ${{ steps.bump.outputs.new }}
+          OLD_SHA: ${{ steps.bump.outputs.old }}
+          NEW_LOG: ${{ steps.bump.outputs.log }}
         run: |
           set -euo pipefail
-          BRANCH="fleet-ui/${{ steps.bump.outputs.new }}"
+          BRANCH="fleet-ui/$NEW_SHA"
           git config user.name  'fleet-ui bump'
           git config user.email 'actions@github.com'
 
@@ -88,9 +127,9 @@ jobs:
           # a re-run should update the existing PR, not fail on a duplicate.
           git checkout -B "$BRANCH"
           git add vendor/fleet-ui
-          git commit -m "Bump fleet-ui to ${{ steps.bump.outputs.new }}
+          git commit -m "Bump fleet-ui to $NEW_SHA
 
-          ${{ steps.bump.outputs.log }}
+          $NEW_LOG
 
           Opened by fleet-ui/.github/workflows/bump-consumers.yml. Structural CSS
           and the shared macros live in one repo and are pinned by SHA in each
@@ -105,13 +144,13 @@ jobs:
           fi
 
           gh pr create \
-            --title "Bump fleet-ui to ${{ steps.bump.outputs.new }}" \
+            --title "Bump fleet-ui to $NEW_SHA" \
             --body "$(cat <<BODY
-          Moves the pinned shared-UI commit from \`${{ steps.bump.outputs.old }}\` to \`${{ steps.bump.outputs.new }}\`.
+          Moves the pinned shared-UI commit from \`$OLD_SHA\` to \`$NEW_SHA\`.
 
           ### fleet-ui commits in this range
           \`\`\`
-          ${{ steps.bump.outputs.log }}
+          $NEW_LOG
           \`\`\`
 
           ### Why this is a pull request

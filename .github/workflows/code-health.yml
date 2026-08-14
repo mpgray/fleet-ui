@@ -120,10 +120,22 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         continue-on-error: true
-        # The agent's prompts drive the `gh` CLI directly. Handing it the
-        # same token keeps those calls working without a second credential.
+        # GITHUB_TOKEN, deliberately, and NOT AGENT_PAT.
+        #
+        # AGENT_PAT exists for one reason: pull requests opened with
+        # GITHUB_TOKEN do not fire `on: pull_request`, so an agent PR would
+        # arrive with no checks. This repository's only agent job opens no pull
+        # request — it rewrites one issue, and an issue edit needs no
+        # re-trigger. (The PRs into the consumers come from
+        # bump-consumers.yml, which uses FLEET_PIN_TOKEN.)
+        #
+        # What the PAT would cost here is the `permissions:` block above, which
+        # is already correctly `contents: read`. Those scopes constrain
+        # GITHUB_TOKEN only; a user PAT carries its own and ignores them
+        # entirely, so passing it makes that read-only declaration decorative.
+        # With GITHUB_TOKEN it is the actual ceiling.
         env:
-          GH_TOKEN: ${{ secrets.AGENT_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Labels every request this job makes, in OpenRouter's activity log.
           # The point is the requests the GitHub log CANNOT show you: alias
           # traffic, background calls, retries. A key tells you which repo; this
@@ -137,7 +149,7 @@ jobs:
           # the Claude GitHub App, which is not installed here, and the run
           # dies with "Could not fetch an OIDC token". The workflow's own
           # token already carries the permissions this job declares above.
-          github_token: ${{ secrets.AGENT_PAT || secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           # --max-turns is a BACKSTOP, not a budget. It "exits with an error when
           # the limit is reached", so a run that trips it has paid for every turn
           # and produced nothing — lowering it does not lower spend, it raises
