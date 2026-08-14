@@ -5,7 +5,7 @@
   --bg: #f6f1e7;
   --surface: #fdfaf3;
   --text: #37302a;
-  --muted: #7d7264;
+  --muted: #776c5f;   /* was #7d7264 — 4.18:1 on parchment */
   --accent: #7c2f2f;
   --accent-contrast: #fdfaf3;
   --border: #e3d9c6;
@@ -14,7 +14,11 @@
   --radius: 4px;
   --header-bg: #2e2a24;
   --header-text: #f0e9da;
+  --shadow-color: rgba(55, 48, 42, 0.14);
+  --rule-accent: 3px;
 }
 
-.site-header { border-bottom: 3px double var(--accent); }
+/* A double rule needs at least 3px to resolve into two lines, which is why
+   --rule-accent above is 3 and not the shared default. */
+.site-header { border-bottom-style: double; }
 .card-title { font-family: 'Playfair Display', Georgia, serif; }

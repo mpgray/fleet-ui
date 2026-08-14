@@ -6,7 +6,10 @@
   --surface: #f7f8fa;
   --text: #24292f;
   --muted: #67707b;
-  --accent: #f2620f;
+  /* Was #f2620f, which is 3.22:1 on white — under AA for any text, and this
+     token colours every prose link and the label inside every filled button.
+     Darkened along its own hue to 4.85:1. Still unmistakably orange. */
+  --accent: #c14d0b;
   --accent-contrast: #ffffff;
   --border: #e4e7eb;
   --font-body: 'Open Sans', system-ui, sans-serif;
@@ -14,7 +17,7 @@
   --radius: 12px;
   --header-bg: #ffffff;
   --header-text: #24292f;
+  --shadow-color: rgba(36, 41, 47, 0.14);
 }
 
-.card-category { background: #fdeadd; padding: 0.15rem 0.6rem; border-radius: 999px; }
 .hero-title { font-weight: 800; }

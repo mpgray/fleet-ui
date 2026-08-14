@@ -5,8 +5,12 @@
   --bg: #faf7f2;
   --surface: #ffffff;
   --text: #3d3230;
-  --muted: #93807b;
-  --accent: #b76e79;
+  /* Both of these were the worst in the fleet: --muted at 3.50:1 and --accent
+     at 3.56:1 on the ivory background, and --muted carries every excerpt,
+     caption and the entire footer. Darkened along their own hues; the rose is
+     still a rose. */
+  --muted: #806d69;
+  --accent: #ac5764;
   --accent-contrast: #ffffff;
   --border: #eadfd8;
   --font-body: 'Lato', system-ui, sans-serif;
@@ -14,8 +18,12 @@
   --radius: 2px;
   --header-bg: #faf7f2;
   --header-text: #3d3230;
+  --shadow-color: rgba(61, 50, 48, 0.10);
+  /* A hairline suits the face. The default 2px band is too much weight above
+     type set this light. */
+  --rule-accent: 1px;
 }
 
 .site-title { letter-spacing: 0.06em; font-style: italic; }
+/* Cormorant is drawn light; at display sizes its 600 reads as a slab. */
 .hero-title, .article-title { font-weight: 500; }
-.card { box-shadow: 0 1px 6px rgba(61, 50, 48, 0.06); }

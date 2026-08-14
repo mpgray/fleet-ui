@@ -5,7 +5,7 @@
   --bg: #f4f2ee;
   --surface: #ffffff;
   --text: #2f3230;
-  --muted: #6f7570;
+  --muted: #6a6f6b;   /* was #6f7570 — 4.22:1 on the warm neutral */
   --accent: #2e6b3f;
   --accent-contrast: #ffffff;
   --border: #ddd8ce;
@@ -14,6 +14,7 @@
   --radius: 6px;
   --header-bg: #2f3230;
   --header-text: #f4f2ee;
+  --shadow-color: rgba(47, 50, 48, 0.16);
+  /* The 4px band was this preset's own rule before the shared layer had one. */
+  --rule-accent: 4px;
 }
-
-.site-header { border-bottom: 4px solid var(--accent); }

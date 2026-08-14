@@ -14,9 +14,18 @@
   --radius: 0px;
   --header-bg: #081008;
   --header-text: #b6e3b6;
+  --shadow-color: transparent;   /* see dark-tech */
+  /* A monospace grid wants square corners the whole way down. --radius: 0
+     used to be quietly overridden by the structure, which built its radii as
+     `calc(var(--radius) + 10px)` and handed this preset rounded cards it had
+     explicitly asked not to have. site.css multiplies now, so 0 means 0. */
 }
 
 .site-title::before { content: '> '; color: var(--accent); }
+/* Stopped by the prefers-reduced-motion block at the foot of site.css. */
 .site-title::after { content: '_'; animation: blink 1.2s step-end infinite; color: var(--accent); }
 @keyframes blink { 50% { opacity: 0; } }
-body { font-size: 0.98rem; }
+
+/* Mono runs wide, so a 68ch measure is a physically longer line than it is in
+   a proportional face — pull it in rather than let the eye lose the return. */
+:root { --measure: 62ch; }

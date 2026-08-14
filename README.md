@@ -10,11 +10,34 @@ to change it in two places?* No. You change it here, once.
 ## What's in here
 
 ```
-css/site.css          structural styles — layout, header, cards, article body
-css/themes/*.css      one file per theme preset; each defines the token block
-templates/macros/     icons.html — icon(name) -> <svg><use href="#icon-name">
-templates/partials/   icon_sprite.html — self-hosted inline SVG sprite
+css/site.css              structural styles — scales, layout, header, cards, article
+css/themes/*.css          one file per theme preset; each defines the token block
+css/tokens-bootstrap.css  the scales as --bs-* vars, for the Bootstrap-based
+                          admin panel and writers' portal (no colours, opt-in)
+templates/macros/         icons.html — icon(name) -> <svg><use href="#icon-name">
+templates/partials/       icon_sprite.html — self-hosted inline SVG sprite
+scripts/check_contrast.py CI: every preset clears WCAG AA. Runs standalone.
 ```
+
+## The design
+
+One signature: a hairline rule in `--accent` down the left of the article, with
+the article's own structure hung off it — the eyebrow at the top, a tick at each
+`h2`, a pull quote stepping out to take the rule over for its height. It is a
+table of contents drawn in the margin, which is why it is allowed to exist: it
+tells the reader how much is left and where the seams are.
+
+That rule reappears as the band under the header, the foot of the hero and the
+top edge of a card on hover. It is the reason `--accent` is the one token
+carrying structure rather than decoration — and structure is the one thing that
+survives being rendered in CRT green on a LAN party site and in dusty rose on a
+wedding blog.
+
+Everything else stays quiet so that it reads. **There are no drop shadows
+outside the sticky header.** There used to be eight, every one a hardcoded
+`rgba(0, 0, 0, α)`, which meant the four dark presets rendered flat while the
+six light ones floated. The fleet did not share a look; it shared a stylesheet
+that only worked on half of it.
 
 ### What does *not* belong here
 
@@ -43,6 +66,55 @@ names gets the fleet look for free by loading `site.css` plus one theme file.
 Adding a token is a breaking change for every consumer — do it deliberately.
 Adding a *theme preset* is not, and a new preset becomes available to blogs and
 extension sites simultaneously.
+
+CI enforces the number, not just the names: `required == CONTRACT` fails both
+ways, so a thirteenth required token cannot arrive without someone editing the
+list in a reviewable diff. That is the check, because a contract grows one
+individually-reasonable token at a time.
+
+### Scales are declared here, not by the presets
+
+`site.css` also declares its own space, type, radius, elevation and measure
+scales in `:root`. Those are **structure**, so they are this file's business,
+not brand:
+
+```
+--step--2 … --step-4        type, a 1.2 scale off a 17px body
+--space-1 … --space-8       4px base
+--r-1 --r-2 --r-pill        MULTIPLIED from --radius, never added to
+--rule --rule-accent --rule-spine
+--shadow-color --elev-1
+--measure --container --column
+```
+
+A preset may override any of them — the cascade puts it second — but it never
+has to, so **adding a scale is not a breaking change for a consumer**. That is
+why the CI job subtracts `site.css`'s own declarations before checking what it
+requires of the presets.
+
+Two of these are worth knowing about before you touch them:
+
+- **`--r-*` multiply.** They used to be written `calc(var(--radius) + 8px)` in
+  nine places, which inverted the token: `terminal` asks for `0` and got
+  10px-rounded cards anyway, `valheim` asks for `14px` and got 24px pillows.
+  Multiplying respects what the preset asked for at both ends of the range.
+- **`--shadow-color` is expected to be overridden per preset.** No single value
+  is right on both `#faf7f2` and `#060a06`; on a near-black background the
+  honest answer is `transparent`, and `--elev-1` carries a border-coloured line
+  that always renders so the header keeps a defined edge either way.
+
+### Accessibility floor
+
+`scripts/check_contrast.py` fails CI if any preset drops a text pair below
+4.5:1. It exists because four of the ten shipped under AA on `--muted` and
+nobody caught it: the value looks reasonable in a swatch, and `--muted` is
+never the colour you are looking at when you review a preset — it is only the
+colour of every excerpt, timestamp, caption, tagline and the entire footer.
+
+`site.css` also carries one `:focus-visible` rule covering everything
+interactive, a skip link, and a `prefers-reduced-motion` block at the foot of
+the file (last, so it wins on specificity ties, and it reaches into the presets
+— `terminal` animates a blinking cursor).
 
 ## Cascade order is load-bearing
 
@@ -84,24 +156,26 @@ Extracted verbatim from `articles-ai/app/static/public/` and
 byte-identical rendered output. `articles-ai` has not yet been switched over to
 consume this repo — that is the second half of phase 0.
 
-## Known issues inherited from the extraction
+## Known issues
 
-Left as-is so the initial extraction stays byte-identical. Fix these once
-`articles-ai` is consuming the submodule and the regression diff has passed:
-
-- **Fonts load via `@import` inside each theme file**, creating a serial
+- **Fonts still load via `@import` inside each theme file**, creating a serial
   request chain — the browser can't discover the font until the theme CSS has
-  parsed. Should become `<link rel="preconnect">` + `<link>` in `<head>`.
-- **No cache-busting** on `site.css` or the theme files; a CSS change relies on
-  browser and proxy revalidation. Needs a build-hash query string.
-- **Zero media queries.** Responsiveness is emergent from `clamp()`,
-  `grid auto-fill minmax()`, `flex-wrap` and `max-width`. It holds up for prose
-  and card grids; it will not hold up for wide content such as stat tables, so
-  consumers rendering those must supply their own `overflow-x: auto` containers
-  and breakpoints.
-# fleet-ui
-# fleet-ui
-# fleet-ui
+  parsed. Consumers now emit `<link rel="preconnect">` for the Google Fonts
+  hosts, which removes the DNS and TLS half of that chain, **but the chain
+  itself remains**. The real fix is self-hosting the faces into this repo,
+  which brings font binaries and a licence review with it. Not done.
+
+Resolved since the extraction, listed so a reader of an old branch knows:
+
+- ~~No cache-busting~~ — consumers append `?v=<pinned sha>`, so the URL changes
+  exactly when the stylesheet does.
+- ~~Zero media queries, so wide content is the consumer's problem~~ —
+  `.table-scroll` / `.stat-table` / `.article-body table` now live here, scroll
+  container and breakpoints included. They were promoted from `game-db`, which
+  had to own them because this file had no table rules at all; the same gap
+  meant a markdown table in a blog article rendered unstyled, and `brewhouse`
+  was patching `article table` on its own for recipes. Wide content was never
+  one site's problem.
 
 ## CI and shipping
 

@@ -1,9 +1,99 @@
 /* site.css — shared structural styles for every public site.
-   All look-and-feel comes from the CSS variables each theme preset defines:
+ *
+ * ── The token contract ────────────────────────────────────────────────────
+ * Twelve tokens come from the theme preset. This file may not contain a
+ * literal colour, font or radius, and CI enforces that every var() it uses is
+ * either one of these twelve or declared by this file below:
+ *
+ *   --bg --surface --text --muted --accent --accent-contrast --border
+ *   --font-body --font-heading --radius --header-bg --header-text
+ *
+ * Everything in the :root block below is declared HERE, not by the presets.
+ * That is deliberate: a scale is structure, and structure is this file's job.
+ * A preset may still override any of them — the cascade puts it second — but
+ * it never has to, so adding a scale is not a breaking change for a consumer.
+ *
+ * ── The design ────────────────────────────────────────────────────────────
+ * One signature: a hairline rule in --accent down the left of the article,
+ * with the article's own structure hung off it — the eyebrow at the top, a
+ * tick at each h2. It is a table of contents drawn in the margin, and it is
+ * the reason --accent is the one token that carries structure rather than
+ * decoration. Everything else stays quiet so that it reads.
+ *
+ * There are no drop shadows outside the sticky header. There used to be eight,
+ * all hardcoded rgba(0,0,0,α), which meant the four dark presets rendered flat
+ * while the six light ones floated — the fleet did not share a look, it shared
+ * a stylesheet that only worked on half of it.
+ */
 
-   --bg --surface --text --muted --accent --accent-contrast --border
-   --font-body --font-heading --radius --header-bg --header-text
-*/
+:root {
+  /* Type — a 1.2 scale off a 17px body. Nine ad-hoc sizes inside a 1.6x range
+     is what "not quite polished" looks like at the CSS level; a reader cannot
+     name the problem but can see that nothing lines up. */
+  --step--2: 0.75rem;      /* eyebrow, filter labels */
+  --step--1: 0.875rem;     /* meta, captions, tagline, footer */
+  --step-0:  1.0625rem;    /* body */
+  --step-1:  1.25rem;      /* card title, lead-in */
+  --step-2:  1.5rem;       /* h3 */
+  --step-3:  1.8125rem;    /* h2 */
+  --step-4:  clamp(2.125rem, 1.6rem + 2.4vw, 2.8rem);   /* article / hero h1 */
+
+  --lh-tight: 1.15;
+  --lh-snug:  1.4;
+  --lh-body:  1.65;
+
+  /* Tracking. Uppercase needs opening out; large display type needs closing
+     up, or it reads loose at the size the clamp reaches on a wide screen. */
+  --track-eyebrow: 0.09em;
+  --track-display: -0.02em;
+
+  /* Space — 4px base. Every one-off in the previous file (0.28 0.35 0.4 0.55
+     0.65 0.85 0.9 1.1 1.25 1.6 1.75 2.2 2.25 2.5 3) maps onto one of these. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+
+  /* Radius — MULTIPLY the theme's radius, never add to it. The previous file
+     used calc(var(--radius) + 4|6|8|10px) in nine places, which inverted the
+     token: `terminal` asks for 0 and got 10px-rounded cards anyway, `valheim`
+     asks for 14px and got 24px pillows. Multiplying respects what the preset
+     asked for at both ends of the range. */
+  --r-1: calc(var(--radius) * 0.5);
+  --r-2: var(--radius);
+  --r-pill: 999px;
+
+  /* Rules. --rule-accent is the band under the header: the site's colour, at
+     the top of every page, tying the header to the article spine below it.
+     Five presets used to hand-roll this as their own border-bottom, which is
+     the usual sign a rule belongs in the shared layer. Set it to 0 to opt out. */
+  --rule: 1px;
+  --rule-accent: 2px;
+  --rule-spine: 1px;
+
+  /* Elevation. --shadow-color is expected to be overridden per preset, because
+     no single value is right on both #faf7f2 and #060a06 — on a near-black
+     background the honest answer is `transparent` and the border does the
+     work. The inset border-coloured line in --elev-1 always renders, so the
+     header keeps a defined edge whatever the preset chooses. */
+  --shadow-color: rgba(0, 0, 0, 0.16);
+  --elev-1: 0 1px 0 var(--border), 0 6px 16px -8px var(--shadow-color);
+
+  /* Measure. 68ch of the BODY face, set on the prose element itself. The old
+     rule was 70ch nested inside an 860px box, and because ch is measured in
+     the body face rather than in px that resolved to roughly 78 characters on
+     a wide screen — a full line longer than it claimed to be. */
+  --measure: 68ch;
+  --container: 1100px;
+  --column: 54rem;
+
+  --ease: cubic-bezier(0.2, 0, 0.1, 1);
+  --dur: 0.18s;
+}
 
 * { box-sizing: border-box; }
 
@@ -13,31 +103,94 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
-  line-height: 1.68;
-  font-size: 1.05rem;
+  line-height: var(--lh-body);
+  font-size: var(--step-0);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%);
-  opacity: 0.7;
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  line-height: var(--lh-tight);
+  color: var(--text);
+  letter-spacing: var(--track-display);
 }
 
-h1, h2, h3, h4 { font-family: var(--font-heading); line-height: 1.15; color: var(--text); }
 a { color: var(--accent); }
 img { max-width: 100%; height: auto; }
 
-/* ── Icons (inline SVG sprite, see partials/icon_sprite.html) ─────────── */
-.icon { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.15em; flex-shrink: 0; }
+/* Dates, counts and stats sit in columns often enough that proportional
+   figures visibly ripple. */
+time, .card-meta, .aside-meta, .byline-date { font-variant-numeric: tabular-nums; }
 
-.container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; }
+/* ── Focus ──────────────────────────────────────────────────────────────
+   One rule, everything interactive, drawn in the site's own accent. Before
+   this the only focus ring in the file was on the hamburger label, and .btn
+   set `border: none` without replacing the outline — so a keyboard user lost
+   the search button, the subscribe button and every card entirely. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+/* Visible only once tabbed to. First stop on every page, so a keyboard reader
+   is not walked through the whole nav to reach the article. */
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: calc(-1 * var(--space-8));
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: var(--r-2);
+  text-decoration: none;
+  font-weight: 600;
+  transition: top var(--dur) var(--ease);
+}
+.skip-link:focus-visible { top: var(--space-2); }
+
+/* ── Icons (inline SVG sprite, see partials/icon_sprite.html) ─────────── */
+.icon {
+  width: 1em; height: 1em;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+}
+
+.container {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+/* ── The eyebrow ────────────────────────────────────────────────────────
+   Small, tracked-out, uppercase, in the accent. It labels a thing's kind
+   before its name — category above a headline, section above a table. It is
+   the only type role outside the scale, because at this size the tracking is
+   doing more work than the size is. */
+.eyebrow,
+.card-category {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: fit-content;
+  font-family: var(--font-heading);
+  font-size: var(--step--2);
+  font-weight: 700;
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+  color: var(--accent);
+  text-decoration: none;
+}
 
 /* ── Header ─────────────────────────────────────────────────────────────
    Sized to be looked past. It was a 5rem logo inside 1.05rem of padding, then
@@ -47,8 +200,13 @@ img { max-width: 100%; height: auto; }
    The cost is vertical, so that is what is cut: the logo, the vertical padding
    and — the one that actually made it tall — the ROW gap. These items wrap
    onto two or three lines, and a symmetric `gap` paid the same generous space
-   between the rows as between the items. Row and column gaps are now set
+   between the rows as between the items. Row and column gaps are set
    separately, and the row gap is small.
+
+   The backdrop-filter that used to be here was dead on nine of the ten
+   presets: --header-bg is opaque everywhere except `valheim`, so the browser
+   was promoting a compositing layer to blur nothing. It now lives behind a
+   guard, applied by any preset whose header background is translucent.
 
    Below 820px the search form and nav collapse behind the hamburger. */
 .site-header {
@@ -56,38 +214,45 @@ img { max-width: 100%; height: auto; }
   top: 0;
   z-index: 30;
   background: var(--header-bg);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(14px);
+  border-bottom: var(--rule-accent) solid var(--accent);
+  box-shadow: var(--elev-1);
 }
 .header-inner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  row-gap: 0.25rem;
-  column-gap: 0.9rem;
-  padding: 0.4rem 1.25rem;
+  row-gap: var(--space-1);
+  column-gap: var(--space-4);
+  padding: var(--space-2) var(--space-5);
 }
-.site-brand { text-decoration: none; display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
+.site-brand { text-decoration: none; display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
 .site-brand-text { display: flex; flex-direction: column; min-width: 0; }
-.site-logo { height: 2.4rem; width: auto; border-radius: calc(var(--radius) / 2); }
-.site-title { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--header-text); line-height: 1.25; }
-.site-tagline { font-size: 0.72rem; color: var(--muted); line-height: 1.2; }
-.site-nav { margin-left: auto; display: flex; flex-wrap: wrap; row-gap: 0.15rem; column-gap: 0.25rem; align-items: center; }
+.site-logo { height: 2.4rem; width: auto; border-radius: var(--r-1); }
+.site-title {
+  font-family: var(--font-heading);
+  font-size: var(--step-1);
+  font-weight: 700;
+  color: var(--header-text);
+  line-height: var(--lh-snug);
+  letter-spacing: 0;
+}
+.site-tagline { font-size: var(--step--1); color: var(--muted); line-height: var(--lh-snug); }
+.site-nav { margin-left: auto; display: flex; flex-wrap: wrap; row-gap: var(--space-1); column-gap: var(--space-1); align-items: center; }
 .site-nav a {
   color: var(--header-text);
   text-decoration: none;
-  font-size: 0.88rem;
-  padding: 0.28rem 0.6rem;
-  border-radius: 999px;
-  transition: background-color 0.18s ease, color 0.18s ease;
+  font-size: var(--step--1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--r-pill);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .site-nav a:hover {
   color: var(--accent-contrast);
   background: var(--accent);
 }
-.search-form { display: flex; align-items: center; gap: 0.35rem; }
-.search-form .input { padding: 0.3rem 0.65rem; font-size: 0.85rem; width: 10rem; }
-.search-form .btn { padding: 0.3rem 0.6rem; }
+.search-form { display: flex; align-items: center; gap: var(--space-1); }
+.search-form .input { padding: var(--space-1) var(--space-3); font-size: var(--step--1); width: 10rem; }
+.search-form .btn { padding: var(--space-1) var(--space-3); }
 
 /* ── The hamburger ──────────────────────────────────────────────────────
    A checkbox, not a script. The previous version toggled a class from
@@ -116,8 +281,8 @@ img { max-width: 100%; height: auto; }
   padding: 0;
   background: transparent;
   color: var(--header-text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: var(--rule) solid var(--border);
+  border-radius: var(--r-2);
   cursor: pointer;
 }
 .nav-toggle-bars { position: relative; }
@@ -167,7 +332,7 @@ img { max-width: 100%; height: auto; }
   }
   .nav-checkbox:checked ~ .search-form {
     order: 1;
-    padding-top: 0.5rem;
+    padding-top: var(--space-2);
   }
   .nav-checkbox:checked ~ .search-form .input { flex: 1; width: auto; }
 
@@ -176,20 +341,20 @@ img { max-width: 100%; height: auto; }
     flex-direction: column;
     align-items: stretch;
     row-gap: 0;
-    padding: 0.4rem 0 0.2rem;
-    border-top: 1px solid var(--border);
-    margin-top: 0.5rem;
+    padding: var(--space-2) 0 var(--space-1);
+    border-top: var(--rule) solid var(--border);
+    margin-top: var(--space-2);
   }
   .nav-checkbox:checked ~ .site-nav a {
-    padding: 0.65rem 0.5rem;
-    font-size: 0.98rem;
-    border-radius: var(--radius);
+    padding: var(--space-3) var(--space-2);
+    font-size: var(--step-0);
+    border-radius: var(--r-2);
   }
   /* The cross-site links are outlined pills at desktop width; as full-width
      rows that outline reads as a text field, so it becomes a rule instead. */
   .nav-checkbox:checked ~ .site-nav .fleet-link {
     border: none;
-    border-top: 1px solid var(--border);
+    border-top: var(--rule) solid var(--border);
     border-radius: 0;
   }
 }
@@ -199,7 +364,7 @@ img { max-width: 100%; height: auto; }
    from the site's own nav. Outlined rather than louder: it should read as a
    way across, not as the most important thing in the header. */
 .site-nav .fleet-link {
-  border: 1px solid var(--accent);
+  border: var(--rule) solid var(--accent);
   color: var(--accent);
 }
 .site-nav .fleet-link:hover {
@@ -207,47 +372,32 @@ img { max-width: 100%; height: auto; }
   color: var(--accent-contrast);
 }
 
-.related-guides { margin-top: 2.5rem; }
-.guide-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
-.guide-item {
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius, 8px);
-  background: var(--surface);
-}
-.guide-link { font-weight: 600; text-decoration: none; color: var(--text); }
-.guide-link:hover { color: var(--accent); text-decoration: underline; }
-.guide-summary { margin: 0.3rem 0 0; font-size: 0.9rem; color: var(--muted); }
-
 /* ── Hero ───────────────────────────────────────────────────────────────
    The image sits beside the headline, not above it. Full-bleed at 18/8 it was
    about 490px tall on an 1100px page, so the entire first screen was one
    article's photograph and the grid of everything else began below the fold.
    A thumbnail still tells you the lead has a picture; it just stops being the
    page. .hero-link-media is set by the template only when there is an image —
-   without it the single text child would be laid into the image column. */
-.hero { margin: 1.5rem 0 2rem; }
+   without it the single text child would be laid into the image column.
+
+   It is no longer a raised card. The lead is the largest type on the page and
+   sits directly above a grid of small type; that is already the hierarchy, and
+   wrapping it in a surface said the same thing a second time. What marks it
+   now is the accent rule at its foot, which is the header's band and the
+   article's spine appearing a third time. */
+.hero { margin: var(--space-5) 0 var(--space-6); }
 .hero-link {
   display: grid;
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 10px);
+  gap: var(--space-4);
+  padding: 0 0 var(--space-5);
+  border-bottom: var(--rule-spine) solid var(--accent);
   text-decoration: none;
   color: inherit;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.07);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 .hero-link-media {
   grid-template-columns: 9rem minmax(0, 1fr);
   align-items: center;
-  gap: 1.1rem;
-}
-.hero-link:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.1);
-  border-color: var(--accent);
+  gap: var(--space-5);
 }
 /* A hard ceiling in absolute units, not only a ratio. An aspect-ratio alone
    still scales with the column, which is how this stayed overpowering after
@@ -259,159 +409,337 @@ img { max-width: 100%; height: auto; }
   max-height: 7rem;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: var(--radius);
+  border-radius: var(--r-2);
 }
-.hero-text { padding: 0.15rem 0.3rem 0.3rem; min-width: 0; }
-.hero-title { font-size: clamp(1.45rem, 2.6vw, 2.05rem); margin: 0.4rem 0 0.4rem; letter-spacing: -0.02em; }
-.hero-excerpt { color: var(--muted); font-size: 1rem; margin: 0; max-width: 68ch; }
+.hero-text { min-width: 0; }
+.hero-title { font-size: var(--step-4); margin: var(--space-2) 0; }
+.hero-excerpt { color: var(--muted); font-size: var(--step-0); margin: 0; max-width: var(--measure); }
+.hero-link:hover .hero-title { color: var(--accent); }
 .hero-empty {
-  text-align: center;
-  padding: 2.5rem 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 10px);
+  padding: var(--space-7) 0;
+  border-bottom: var(--rule-spine) solid var(--accent);
 }
 
 @media (max-width: 720px) {
   /* Still side by side on a phone, just narrower. Stacking it put a
      full-width image back above the headline, which is the thing being
      removed. */
-  .hero-link-media { grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.9rem; }
+  .hero-link-media { grid-template-columns: 6.5rem minmax(0, 1fr); gap: var(--space-4); }
   .hero-image { max-width: 6.5rem; max-height: 5rem; }
-  .hero-link { padding: 0.8rem; }
 }
 
 /* ── Home: content column + skim rail ───────────────────────────────────
    The rail is titles only and holds articles that are not already in the grid
    below it, so it adds reach rather than repeating what is on screen. It
    collapses to a normal block under the aside breakpoint — sticky positioning
-   is dropped there too, or it would pin mid-scroll on a phone. */
-/* One column by default. The second is added by .home-layout-rail, which the
+   is dropped there too, or it would pin mid-scroll on a phone.
+
+   One column by default. The second is added by .home-layout-rail, which the
    template sets only when there is a rail — the column used to be
    unconditional while the rail was not, so a site without one rendered its
    content off-centre beside a blank 16rem strip. */
 .home-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 2.25rem;
+  gap: var(--space-7);
   align-items: start;
 }
 .home-layout-rail { grid-template-columns: minmax(0, 1fr) 16rem; }
 .home-main { min-width: 0; }
-.home-aside { position: sticky; top: 5.5rem; }
+
+/* The rail carries the spine too, so the page has one rule language: a thing
+   bounded by an accent rule is a column of reading. */
+.home-aside {
+  position: sticky;
+  top: var(--space-8);
+  padding-left: var(--space-4);
+  border-left: var(--rule-spine) solid var(--accent);
+}
 .aside-heading {
-  font-size: 0.78rem;
+  font-family: var(--font-heading);
+  font-size: var(--step--2);
   text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: var(--track-eyebrow);
   color: var(--muted);
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
 }
 .aside-list { list-style: none; margin: 0; padding: 0; }
-.aside-list li + li { border-top: 1px solid var(--border); }
+.aside-list li + li { border-top: var(--rule) solid var(--border); }
 .aside-list a {
   display: block;
-  padding: 0.6rem 0;
+  padding: var(--space-3) 0;
   color: var(--text);
   text-decoration: none;
-  font-size: 0.92rem;
-  line-height: 1.42;
+  font-size: var(--step--1);
+  line-height: var(--lh-snug);
 }
 .aside-list a:hover { color: var(--accent); }
-.aside-meta { display: block; font-size: 0.74rem; color: var(--muted); margin-top: 0.15rem; }
+.aside-meta { display: block; font-size: var(--step--2); color: var(--muted); margin-top: var(--space-1); }
 
 @media (max-width: 980px) {
   .home-layout,
-  .home-layout-rail { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .home-layout-rail { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
   .home-aside { position: static; }
 }
 
-/* ── Cards ──────────────────────────────────────────────────────────── */
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.6rem; margin: 2rem 0; }
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 8px);
-  overflow: hidden;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-}
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.12);
-  border-color: var(--accent);
-}
-.card-link { display: flex; flex-direction: column; min-height: 100%; text-decoration: none; color: inherit; }
-.card-image { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; filter: saturate(1.03) contrast(1.02); }
-.card-image-placeholder { background: linear-gradient(135deg, var(--accent), var(--surface)); aspect-ratio: 16 / 10; display: flex; align-items: center; justify-content: center; }
-.card-image-placeholder .icon { width: 2.25rem; height: 2.25rem; color: var(--accent-contrast); opacity: 0.65; }
-.card-body { padding: 1rem 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
-.card-category { display: inline-flex; align-items: center; gap: 0.3rem; width: fit-content; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); text-decoration: none; margin-bottom: 0.15rem; }
-.card-title { margin: 0.1rem 0 0.2rem; font-size: 1.14rem; }
-.card-excerpt { color: var(--muted); font-size: 0.92rem; margin: 0; }
-.card-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); margin-top: auto; padding-top: 0.25rem; }
-.card-meta span, .card-meta time { display: inline-flex; align-items: center; gap: 0.3rem; }
+/* ── Cards ────────────────────────────────────────────────────────────
+   A hairline and an image, no surface fill and no shadow. Six near-identical
+   raised rectangles in a grid is the shape every blog template ships; what
+   distinguishes one card from the next should be its photograph and its
+   headline, which is what is left once the chrome is gone.
 
-/* ── Article ────────────────────────────────────────────────────────── */
-.article-narrow { max-width: 860px; margin: 2rem auto; }
+   Hover is the accent rule appearing along the top edge — the same rule as the
+   header band, the hero foot and the article spine. */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-6) var(--space-5);
+  margin: var(--space-6) 0;
+}
+.card {
+  position: relative;
+  border-top: var(--rule) solid var(--border);
+  padding-top: var(--space-4);
+}
+/* Drawn as a pseudo-element rather than by swapping border-color, so the
+   accent can be thicker than the hairline without the card shifting by a
+   pixel on hover. */
+.card::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * var(--rule));
+  left: 0;
+  width: 0;
+  height: var(--rule-spine);
+  background: var(--accent);
+  transition: width var(--dur) var(--ease);
+}
+.card:hover::before,
+.card:focus-within::before { width: 100%; }
+.card-link { display: flex; flex-direction: column; min-height: 100%; text-decoration: none; color: inherit; gap: var(--space-3); }
+.card-media { overflow: hidden; border-radius: var(--r-2); }
+.card-image {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  display: block;
+  border-radius: var(--r-2);
+  transition: transform var(--dur) var(--ease);
+}
+.card:hover .card-image { transform: scale(1.02); }
+.card-image-placeholder {
+  background: var(--surface);
+  border: var(--rule) solid var(--border);
+  border-radius: var(--r-2);
+  aspect-ratio: 16 / 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-image-placeholder .icon { width: 2.25rem; height: 2.25rem; color: var(--muted); }
+.card-body { display: flex; flex-direction: column; gap: var(--space-2); flex: 1; }
+.card-title { margin: 0; font-size: var(--step-1); line-height: var(--lh-snug); }
+.card:hover .card-title { color: var(--accent); }
+.card-excerpt { color: var(--muted); font-size: var(--step--1); margin: 0; }
+.card-meta {
+  display: flex; gap: var(--space-3); flex-wrap: wrap;
+  font-size: var(--step--2); color: var(--muted);
+  margin-top: auto; padding-top: var(--space-1);
+}
+.card-meta span, .card-meta time { display: inline-flex; align-items: center; gap: var(--space-1); }
+
+/* ── Article: the spine ─────────────────────────────────────────────────
+   The article is not a panel floating on the page — it is a column of reading
+   with a rule down its left edge. The rule is the article's extent, and the
+   ticks hung off it at each h2 are its joints, so the margin says how much is
+   left and where the seams are. That is the one thing in this stylesheet that
+   is allowed to be a flourish, and it earns it by being informative.
+
+   .article-body and each h2 share a left edge, so the tick's offset back to
+   the spine is exactly the padding — do not add padding to .article-body or
+   the ticks will detach. */
+.article-narrow { max-width: var(--column); margin: 0 auto; }
 .article-full { width: 100%; }
 .article {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 10px);
-  padding: clamp(1.1rem, 2vw, 1.75rem);
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.08);
+  max-width: var(--column);
+  margin: var(--space-6) auto var(--space-7);
+  padding-left: var(--space-5);
+  border-left: var(--rule-spine) solid var(--accent);
 }
-.article-header { margin-bottom: 1.4rem; }
-.article-title { font-size: clamp(1.8rem, 3.6vw, 2.6rem); margin: 0.35rem 0 0.85rem; letter-spacing: -0.02em; }
-.article-hero { margin: 0 0 1.5rem; }
+.article-header { margin-bottom: var(--space-5); }
+.article-title { font-size: var(--step-4); margin: var(--space-2) 0 var(--space-4); }
+.article-hero { margin: 0 0 var(--space-6); }
 .article-hero img {
   width: 100%;
-  border-radius: calc(var(--radius) + 6px);
+  border-radius: var(--r-2);
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
 }
-.article-hero figcaption { font-size: 0.78rem; color: var(--muted); margin-top: 0.4rem; }
+.article-hero figcaption { font-size: var(--step--1); color: var(--muted); margin-top: var(--space-2); }
 .article-hero figcaption a { color: var(--muted); }
-.article-body { max-width: 70ch; }
-.article-body h2 { margin-top: 2.2rem; }
-.article-body h3 { margin-top: 1.6rem; }
-.article-body p, .article-body li { font-size: 1.03rem; line-height: 1.74; }
-.article-body pre { background: var(--surface); border: 1px solid var(--border); border-radius: calc(var(--radius) + 4px); padding: 1rem; overflow-x: auto; font-size: 0.9rem; }
-.article-body code { background: var(--surface); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.92em; }
-.article-body pre code { background: none; padding: 0; }
-.article-body blockquote {
-  border-left: 3px solid var(--accent);
-  margin: 1.5rem 0;
-  padding: 1rem 1.2rem;
-  color: var(--muted);
-  background: rgba(127, 127, 127, 0.06);
-  border-radius: 0 calc(var(--radius) + 2px) calc(var(--radius) + 2px) 0;
+
+.article-body { max-width: var(--measure); }
+.article-body h2 { position: relative; font-size: var(--step-3); margin: var(--space-7) 0 var(--space-4); }
+.article-body h2::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-5));
+  top: 0.6em;
+  width: var(--space-3);
+  height: var(--rule-spine);
+  background: var(--accent);
 }
-.article-tags { margin: 1.5rem 0 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.tag {
-  background: rgba(127, 127, 127, 0.08);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.22rem 0.8rem;
-  font-size: 0.8rem;
+.article-body h3 { font-size: var(--step-2); margin: var(--space-6) 0 var(--space-3); }
+.article-body p, .article-body li { font-size: var(--step-0); line-height: var(--lh-body); }
+.article-body > :first-child { margin-top: 0; }
+.article-body pre {
+  background: var(--surface);
+  border: var(--rule) solid var(--border);
+  border-radius: var(--r-2);
+  padding: var(--space-4);
+  overflow-x: auto;
+  font-size: var(--step--1);
+}
+.article-body code { background: var(--surface); padding: 0.1em 0.35em; border-radius: var(--r-1); font-size: 0.92em; }
+.article-body pre code { background: none; padding: 0; }
+/* Hung off the spine rather than given a bar of its own: a second vertical
+   rule three words from the first is noise, so a pull quote steps OUT to the
+   spine and takes it over for its height. */
+.article-body blockquote {
+  margin: var(--space-6) 0 var(--space-6) calc(-1 * var(--space-5));
+  padding: var(--space-2) 0 var(--space-2) calc(var(--space-5) - var(--rule-spine));
+  border-left: var(--rule-accent) solid var(--accent);
+  color: var(--text);
+  font-size: var(--step-1);
+  line-height: var(--lh-snug);
+}
+.article-body blockquote p:last-child { margin-bottom: 0; }
+
+.article-tags { margin: var(--space-6) 0 var(--space-2); display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tag, .chip {
+  display: inline-block;
+  border: var(--rule) solid var(--border);
+  border-radius: var(--r-pill);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--step--1);
   color: var(--muted);
+  text-decoration: none;
+}
+a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 600px) {
+  /* The spine survives on a phone but the tick does not — at this width the
+     h2 needs its full measure more than the margin needs its marker. */
+  .article { padding-left: var(--space-4); }
+  .article-body h2::before { display: none; }
+  .article-body blockquote {
+    margin-left: calc(-1 * var(--space-4));
+    padding-left: calc(var(--space-4) - var(--rule-spine));
+  }
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────────
+   Promoted from game-db, where they had to live because this file had no table
+   rules at all — which also meant a markdown table in a blog article rendered
+   unstyled, and `brewhouse` was patching `article table` on its own for
+   recipes. Wide content is a fleet problem, not one site's.
+
+   The table scrolls inside its container, never the page body. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: var(--rule) solid var(--border);
+  border-radius: var(--r-2);
+  margin: var(--space-5) 0;
+  background: var(--surface);
+}
+.stat-table, .article-body table {
+  border-collapse: collapse;
+  font-size: var(--step--1);
+}
+.stat-table { width: 100%; }
+
+/* A markdown table cannot be wrapped in .table-scroll, because nothing puts a
+   container around it — the renderer emits a bare <table> into .article-body.
+   So it becomes its own scroller: display:block makes overflow-x apply at all,
+   fit-content keeps it from collapsing its columns to the measure, and
+   max-width caps it at the column so a wide recipe or spec table scrolls
+   inside the article instead of scrolling the page sideways. */
+.article-body table {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: var(--space-5) 0;
+}
+.stat-table th, .stat-table td,
+.article-body th, .article-body td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  vertical-align: top;
+}
+.stat-table thead th, .article-body thead th {
+  font-family: var(--font-heading);
+  font-size: var(--step--2);
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: var(--rule) solid var(--border);
+  white-space: nowrap;
+}
+.stat-table tbody tr + tr,
+.article-body tbody tr + tr { border-top: var(--rule) solid var(--border); }
+/* A url field falls back to rendering the whole href when it has no host to
+   show. Break it rather than let it push the table wider than its scroller. */
+.stat-table td a { word-break: break-word; }
+.stat-table th[scope='row'] {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+  width: 34%;
+}
+.compare-table th[scope='row'] { width: auto; }
+.stat-sublist { list-style: none; margin: 0; padding: 0; }
+.stat-sublist li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-1) 0;
+  max-width: 22rem;
+}
+.stat-subkey { color: var(--text); text-transform: capitalize; }
+.stat-subval { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 720px) {
+  .stat-table th[scope='row'] { width: 45%; white-space: normal; }
+  .stat-table th, .stat-table td { padding: var(--space-2) var(--space-3); }
+  .stat-sublist li { max-width: none; }
 }
 
 /* ── Byline / author ────────────────────────────────────────────────── */
-.avatar-fallback { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+.avatar-fallback {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; border-radius: 50%;
+  background: var(--surface); border: var(--rule) solid var(--border);
+  color: var(--muted);
+}
 .avatar-fallback .icon { width: 50%; height: 50%; }
-.byline { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 0; }
+.byline { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0; }
 .byline-avatar { border-radius: 50%; }
-.byline-text { display: flex; flex-direction: column; font-size: 0.88rem; }
+.byline-text { display: flex; flex-direction: column; font-size: var(--step--1); }
 .byline-name { font-weight: 600; text-decoration: none; }
-.byline-quals, .byline-date { color: var(--muted); font-size: 0.8rem; }
-.author-box { background: var(--surface); border: 1px solid var(--border); border-radius: calc(var(--radius) + 8px); padding: 1.25rem; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08); }
+.byline-quals, .byline-date { color: var(--muted); font-size: var(--step--2); }
+.author-box {
+  background: var(--surface);
+  border: var(--rule) solid var(--border);
+  border-radius: var(--r-2);
+  padding: var(--space-5);
+}
 .author-box img { border-radius: 50%; }
-.author-box h3 { margin: 0.5rem 0 0.2rem; }
+.author-box h3 { margin: var(--space-2) 0 var(--space-1); font-size: var(--step-1); }
 .author-box h3 a { text-decoration: none; color: var(--text); }
-.author-quals { color: var(--accent); font-size: 0.85rem; margin: 0 0 0.5rem; }
-.author-header { display: flex; gap: 1.5rem; align-items: center; }
+.author-quals { color: var(--accent); font-size: var(--step--1); margin: 0 0 var(--space-2); }
+.author-header { display: flex; gap: var(--space-5); align-items: center; }
 .author-avatar { border-radius: 50%; }
 
 /* ── Human contributors ─────────────────────────────────────────────────
@@ -419,51 +747,104 @@ img { max-width: 100%; height: auto; }
    The photo is a square-cropped photograph rather than a circular illustrated
    avatar, the byline carries a job title and credentials the persona has no
    truthful equivalent for, and only a person gets the .writer-box at the foot
-   of an article. Colours come from theme variables like everything else. */
-.writer-byline { align-items: flex-start; border-left: 3px solid var(--accent); padding-left: 0.9rem; }
-.writer-photo { border-radius: var(--radius); object-fit: cover; flex-shrink: 0; }
+   of an article. Colours come from theme variables like everything else.
+
+   The persona byline sits ON the spine; a writer's steps out to a rule of its
+   own, which is the same distinction drawn in the margin. */
+.writer-byline {
+  align-items: flex-start;
+  margin-left: calc(-1 * var(--space-5));
+  padding-left: calc(var(--space-5) - var(--rule-accent));
+  border-left: var(--rule-accent) solid var(--accent);
+}
+.writer-photo { border-radius: var(--r-2); object-fit: cover; flex-shrink: 0; }
 .writer-name { color: var(--text); }
-.writer-role { color: var(--accent); font-size: 0.85rem; font-weight: 600; margin: 0; }
-.writer-credentials { color: var(--muted); font-size: 0.8rem; margin: 0; }
-.writer-box { display: flex; gap: 1.25rem; align-items: flex-start; margin: 2.5rem 0 0; padding: 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: calc(var(--radius) + 8px); }
-.writer-box-name { margin: 0 0 0.2rem; font-size: 1.05rem; }
+.writer-role { color: var(--accent); font-size: var(--step--1); font-weight: 600; margin: 0; }
+.writer-credentials { color: var(--muted); font-size: var(--step--2); margin: 0; }
+.writer-box {
+  display: flex; gap: var(--space-5); align-items: flex-start;
+  margin: var(--space-7) 0 0;
+  padding-top: var(--space-5);
+  border-top: var(--rule) solid var(--border);
+}
+.writer-box-name { margin: 0 0 var(--space-1); font-size: var(--step-1); }
 .writer-box-name a { color: var(--text); text-decoration: none; }
-.writer-bio { font-size: 0.9rem; color: var(--text); }
+.writer-bio { font-size: var(--step--1); color: var(--text); }
 .writer-bio p:last-child { margin-bottom: 0; }
-.writer-links { list-style: none; display: flex; flex-wrap: wrap; gap: 0.9rem; padding: 0; margin: 0.6rem 0 0; font-size: 0.85rem; }
-.writer-header { display: flex; gap: 1.75rem; align-items: flex-start; }
-.writer-header h1 { margin: 0 0 0.35rem; }
-.writer-header-photo { border-radius: var(--radius); }
+.writer-links { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-4); padding: 0; margin: var(--space-3) 0 0; font-size: var(--step--1); }
+.writer-header { display: flex; gap: var(--space-6); align-items: flex-start; }
+.writer-header h1 { margin: 0 0 var(--space-2); }
+.writer-header-photo { border-radius: var(--r-2); }
 .writer-header-text { max-width: 44rem; }
 
 @media (max-width: 600px) {
-  .writer-box, .writer-header { flex-direction: column; gap: 1rem; }
+  .writer-box, .writer-header { flex-direction: column; gap: var(--space-4); }
+  .writer-byline { margin-left: calc(-1 * var(--space-4)); padding-left: calc(var(--space-4) - var(--rule-accent)); }
 }
 
 /* ── Listings / misc ────────────────────────────────────────────────── */
-.listing-header { margin: 2.5rem 0 0.5rem; }
+.listing-header { margin: var(--space-7) 0 var(--space-2); }
+.listing-header h1 { font-size: var(--step-4); }
 .listing-header p { color: var(--muted); }
-.related h2 { margin-top: 3rem; }
+.related h2, .related-guides h2 { margin-top: var(--space-8); font-size: var(--step-2); }
 .empty-note { color: var(--muted); }
+.page-title { font-family: var(--font-heading); font-size: var(--step-4); margin: var(--space-6) 0 var(--space-1); }
+.page-sub { color: var(--muted); margin: 0 0 var(--space-5); }
+.muted { color: var(--muted); }
+.section { margin: var(--space-7) 0; }
+.section-title {
+  font-family: var(--font-heading);
+  font-size: var(--step-2);
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--rule) solid var(--border);
+}
+.breadcrumb { color: var(--muted); font-size: var(--step--1); margin: var(--space-5) 0 0; }
+.breadcrumb a { color: var(--muted); }
+.breadcrumb a:hover { color: var(--accent); }
+
+.related-guides { margin-top: var(--space-7); }
+.guide-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.guide-item {
+  padding: var(--space-4) 0;
+  border-top: var(--rule) solid var(--border);
+}
+.guide-link { font-weight: 600; text-decoration: none; color: var(--text); }
+.guide-link:hover { color: var(--accent); }
+.guide-summary { margin: var(--space-1) 0 0; font-size: var(--step--1); color: var(--muted); }
 
 /* ── Forms & buttons (search, newsletter, contact) ─────────────────── */
-.form { display: grid; gap: 0.9rem; max-width: 480px; margin: 1.5rem 0; }
-.field { display: grid; gap: 0.3rem; }
-.field label { font-size: 0.85rem; color: var(--muted); }
+.form { display: grid; gap: var(--space-3); max-width: 480px; margin: var(--space-5) 0; }
+.field { display: grid; gap: var(--space-1); }
+.field label { font-size: var(--step--1); color: var(--muted); }
 .input, .textarea {
-  font: inherit; padding: 0.6rem 0.85rem; border: 1px solid var(--border);
-  border-radius: var(--radius); background: var(--bg); color: var(--text);
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  border: var(--rule) solid var(--border);
+  border-radius: var(--r-2);
+  background: var(--bg);
+  color: var(--text);
 }
 .textarea { resize: vertical; min-height: 6rem; }
 .btn {
-  display: inline-flex; align-items: center; gap: 0.4rem; justify-content: center;
+  display: inline-flex; align-items: center; gap: var(--space-2); justify-content: center;
   background: var(--accent); color: var(--accent-contrast); border: none;
-  border-radius: 999px; padding: 0.55rem 1.15rem; font: inherit; font-weight: 600;
+  border-radius: var(--r-pill);
+  padding: var(--space-2) var(--space-5);
+  font: inherit; font-weight: 600;
   cursor: pointer; text-decoration: none;
 }
 .btn:hover { filter: brightness(1.08); }
-.form-banner { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1rem; margin: 1rem 0; color: var(--text); }
-.newsletter-form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.form-banner {
+  background: var(--surface);
+  border: var(--rule) solid var(--border);
+  border-left: var(--rule-accent) solid var(--accent);
+  border-radius: var(--r-2);
+  padding: var(--space-3) var(--space-4);
+  margin: var(--space-4) 0;
+  color: var(--text);
+}
+.newsletter-form { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 .newsletter-form .input { min-width: 14rem; }
 .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
@@ -479,16 +860,67 @@ img { max-width: 100%; height: auto; }
   border: 0;
 }
 
-/* ── Ads: reserve space so units don't shift the layout (CLS) ───────── */
-.ad-slot { min-height: 100px; margin: 1.5rem auto; text-align: center; }
-.ad-slot-header, .ad-slot-footer { max-width: 1100px; }
+/* ── Ads ────────────────────────────────────────────────────────────────
+   The min-heights reserve space so a unit does not shift the layout when it
+   loads (CLS) — do not remove them.
+
+   The label is new. An unlabelled block between two paragraphs, in a page
+   whose whole job is to look like editorial, is indistinguishable from
+   editorial until it renders. Saying so costs one line of small type and is
+   the difference between a publication and a content farm. */
+.ad-slot {
+  min-height: 100px;
+  margin: var(--space-6) auto;
+  text-align: center;
+}
+.ad-slot::before {
+  content: 'Advertisement';
+  display: block;
+  font-size: var(--step--2);
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  padding-bottom: var(--space-1);
+  border-bottom: var(--rule) solid var(--border);
+  margin-bottom: var(--space-3);
+}
+.ad-slot-header, .ad-slot-footer { max-width: var(--container); }
 .ad-slot-sidebar { min-height: 250px; }
 /* Reserve height for the in-flow placements too, or they shift the article
    when the unit loads — the CLS problem .ad-slot exists to prevent. */
-.ad-slot-below_hero, .ad-slot-in_article { max-width: 860px; min-height: 280px; }
+.ad-slot-below_hero, .ad-slot-in_article { max-width: var(--column); min-height: 280px; }
 
 /* ── Footer ─────────────────────────────────────────────────────────── */
-.site-footer { border-top: 1px solid var(--border); margin-top: 3rem; background: var(--header-bg); backdrop-filter: blur(14px); }
-.footer-inner { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center; padding: 1.5rem 1.25rem; font-size: 0.85rem; color: var(--muted); }
-.footer-preview-image { height: 7.8rem; width: auto; flex-shrink: 0; border-radius: calc(var(--radius) / 2); }
-.footer-inner a { color: var(--muted); margin-right: 1rem; }
+.site-footer {
+  border-top: var(--rule) solid var(--border);
+  margin-top: var(--space-8);
+  background: var(--header-bg);
+}
+.footer-inner {
+  display: flex; flex-wrap: wrap; gap: var(--space-4);
+  justify-content: space-between; align-items: center;
+  padding: var(--space-6) var(--space-5);
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+.footer-preview-image { height: 7.8rem; width: auto; flex-shrink: 0; border-radius: var(--r-1); }
+.footer-inner a { color: var(--muted); margin-right: var(--space-4); }
+.footer-inner a:hover { color: var(--accent); }
+.footer-note { color: var(--muted); font-size: var(--step--1); max-width: 60ch; }
+
+/* ── Motion ─────────────────────────────────────────────────────────────
+   Last, so it wins on specificity ties. Covers the presets too: `terminal`
+   animates a blinking cursor on .site-title::after, which is exactly the kind
+   of persistent motion this preference exists to stop. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card:hover .card-image { transform: none; }
+}

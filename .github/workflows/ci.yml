@@ -56,18 +56,55 @@ jobs:
       # only use variables every preset defines. A var() with no declaration
       # renders as nothing and the failure is a colour that silently vanishes on
       # one site — which is exactly the drift this repo exists to prevent.
+      #
+      # site.css also declares its own scales (space, type, radius, elevation).
+      # Those are structure, not brand, so they are subtracted before the check
+      # — otherwise every preset would have to restate two dozen values it has
+      # no opinion about, and the twelve-token contract would be a fiction.
+      #
+      # The equality assertion is the point of the job. Without it the contract
+      # grows one token at a time, each addition individually reasonable, until
+      # a new consumer needs a spreadsheet to onboard. Adding a thirteenth
+      # REQUIRED token means editing this list, in a diff someone reviews.
       - name: Every token used is declared by every theme
         run: |
           python - <<'PY'
           import pathlib, re, sys
-          used = set(re.findall(r'var\(\s*(--[\w-]+)', pathlib.Path('css/site.css').read_text()))
+          CONTRACT = {
+              '--bg', '--surface', '--text', '--muted', '--accent',
+              '--accent-contrast', '--border', '--font-body', '--font-heading',
+              '--radius', '--header-bg', '--header-text',
+          }
+          site = pathlib.Path('css/site.css').read_text()
+          used = set(re.findall(r'var\(\s*(--[\w-]+)', site))
+          self_declared = set(re.findall(r'^\s*(--[\w-]+)\s*:', site, re.M))
+          required = used - self_declared
+
           failed = False
+          if required != CONTRACT:
+              failed = True
+              for tok in sorted(required - CONTRACT):
+                  print(f'FAIL site.css requires {tok} from presets but it is '
+                        f'not in the twelve-token contract — declare a default '
+                        f'in site.css, or add it to CONTRACT deliberately')
+              for tok in sorted(CONTRACT - required):
+                  print(f'FAIL {tok} is in the contract but site.css no longer '
+                        f'uses it — remove it from CONTRACT and from the README')
+
           for theme in sorted(pathlib.Path('css/themes').glob('*.css')):
               declared = set(re.findall(r'^\s*(--[\w-]+)\s*:', theme.read_text(), re.M))
-              missing = used - declared
+              missing = CONTRACT - declared
               if missing:
                   failed = True
                   print(f'FAIL {theme.name} does not declare: {", ".join(sorted(missing))}')
-          print(f'{len(used)} tokens used by site.css')
+
+          print(f'{len(used)} tokens used by site.css, '
+                f'{len(self_declared)} declared by it, {len(required)} required of presets')
           sys.exit(1 if failed else 0)
           PY
+
+      # Four of the ten presets shipped below AA on --muted, which is the
+      # colour of nearly all the small type on the site. A swatch review does
+      # not catch that; arithmetic does.
+      - name: Every preset clears WCAG AA
+        run: python scripts/check_contrast.py
