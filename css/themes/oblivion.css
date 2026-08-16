@@ -1,0 +1,31 @@
+/* oblivion — oblivion.elderscrolls.top: imperial marble and gold. The light one
+   of the five; see elderscrolls.css. */
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #f0f1ee;
+  --surface: #ffffff;
+  --text: #29282a;
+  --muted: #64636a;
+  --accent: #7d6118;
+  --accent-contrast: #ffffff;
+  --border: #dcdcd7;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'EB Garamond', Georgia, serif;
+  --radius: 4px;
+  --header-bg: #3b3a34;
+  --header-text: #f0f1ee;
+  --shadow-color: rgba(41, 40, 42, 0.13);
+  --rule-accent: 3px;
+}
+
+/* The ground is a cool stone grey, not parchment, and that is load-bearing.
+   library is already warm parchment with a dark red serif treatment, and an
+   imperial-Roman brief pulls in exactly that direction — so the one thing this
+   preset must not be is a second library. Cool ground, gold rather than oxblood.
+
+   The gold is much darker than it wants to be: an imperial gold that actually
+   looks like gold sits around 3:1 on a light ground, and this token colours every
+   prose link and the label inside every filled button. Darkened along its own hue
+   until it clears AA. It reads as old gilding rather than bright leaf, which is
+   the honest version of the reference anyway. */

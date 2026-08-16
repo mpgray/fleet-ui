@@ -1,0 +1,25 @@
+/* eso — online.elderscrolls.top: heraldic. Deep navy field, gold device.
+   One of five sharing EB Garamond; see elderscrolls.css. */
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #0f1622;
+  --surface: #18202e;
+  --text: #e5eaf2;
+  --muted: #9ba7b8;
+  --accent: #d4a843;
+  --accent-contrast: #0f1622;
+  --border: #27334a;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'EB Garamond', Georgia, serif;
+  --radius: 6px;
+  --header-bg: #0b111b;
+  --header-text: #eef2f8;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+/* This is the closest any two presets in the fleet come: valheim is also dark
+   with a gold accent at nearly this value. The separation is the ground — navy
+   against valheim's green-black — and the heading face. It is close enough that
+   changing either one of those without checking the other is how the fleet ends
+   up with two sites that look like the same site. */

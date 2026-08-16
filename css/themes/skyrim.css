@@ -1,0 +1,25 @@
+/* skyrim — skyrim.elderscrolls.top: the cold. Slate, snow-shadow, pale ice.
+   One of five sharing EB Garamond; see elderscrolls.css. */
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #101519;
+  --surface: #1a2229;
+  --text: #e4ecf2;
+  --muted: #99a8b4;
+  --accent: #7fc4dd;
+  --accent-contrast: #0b0f12;
+  --border: #2a3742;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'EB Garamond', Georgia, serif;
+  --radius: 4px;
+  --header-bg: #0c1114;
+  --header-text: #eaf2f7;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Deliberately cold, and that is a decision rather than a mood. The obvious
+   palette for a norse-flavoured game is mossy stone and bronze, which is exactly
+   what valheim already is — a second one would make the two sites indis-
+   tinguishable in a browser tab strip. So this goes blue: no green anywhere in
+   the ground, and an ice accent where valheim puts gold. */

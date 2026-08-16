@@ -1,0 +1,29 @@
+/* dontstarve — dontstarvetogether.top: gothic paper-cutout. Charcoal, bone,
+   a blood accent. The one preset in the fleet that should read as illustrated. */
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #16151a;
+  --surface: #201f26;
+  --text: #eae6dd;
+  --muted: #a8a29a;
+  --accent: #e0574f;
+  --accent-contrast: #16151a;
+  --border: #33313a;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Special Elite', Georgia, serif;
+  --radius: 2px;
+  --header-bg: #100f13;
+  --header-text: #f0ebe0;
+  --shadow-color: rgba(0, 0, 0, 0.55);
+}
+
+/* Special Elite is a distressed typewriter face with one weight. Anything that
+   asks it for 600 or 700 gets a synthesised bold, which smears the distressing
+   into mud at display sizes — so every heading role is pinned back to 400 and
+   the emphasis comes from size and tracking instead. */
+.site-title,
+.hero-title,
+.article-title,
+.card-title,
+.section-title { font-weight: 400; letter-spacing: 0.015em; }

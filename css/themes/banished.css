@@ -1,0 +1,26 @@
+/* banished — banished.top: a hard winter. Cold grey wool, slate-blue accent. */
+@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #eef0ed;
+  --surface: #ffffff;
+  --text: #2b2e2b;
+  --muted: #5f645e;
+  --accent: #37546f;
+  --accent-contrast: #ffffff;
+  --border: #d6dad4;
+  --font-body: 'Work Sans', system-ui, sans-serif;
+  --font-heading: 'Spectral', Georgia, serif;
+  --radius: 3px;
+  --header-bg: #33372f;
+  --header-text: #eef0ed;
+  --shadow-color: rgba(43, 46, 43, 0.14);
+  --rule-accent: 3px;
+}
+
+/* Deliberately the least saturated preset in the fleet. A settlement game about
+   scarcity should not look abundant, and the temptation with a medieval subject
+   is to reach for the same warm parchment that library and brewhouse already
+   occupy. This ground is cold — green-grey rather than cream — and the accent is
+   a slate blue rather than the rust the subject invites, because rust on a light
+   ground is what rimworld is. */
