@@ -1,0 +1,27 @@
+/* thingmingle — thingmingle.com: a bright workshop. White bench, filament violet.
+   The only non-game site in this batch, and it should not look like one. */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #ffffff;
+  --surface: #f6f7f9;
+  --text: #1f2328;
+  --muted: #5f6874;
+  --accent: #6d28d9;
+  --accent-contrast: #ffffff;
+  --border: #e3e6ea;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Outfit', system-ui, sans-serif;
+  --radius: 14px;
+  --header-bg: #ffffff;
+  --header-text: #1f2328;
+  --shadow-color: rgba(31, 35, 40, 0.12);
+}
+
+/* bright is the fleet's other white-page preset and is a warm orange; this is
+   the cool one. The violet is a filament colour rather than a brand colour —
+   the subject is a spool of plastic in a saturated hue, and picking any of the
+   safe neutrals would have thrown away the one visual idea the topic hands you.
+
+   The largest radius in the fleet, matching valheim's 14px, because rounded is
+   what a printed part looks like when it comes off the bed well. */

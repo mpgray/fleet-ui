@@ -1,0 +1,30 @@
+/* tavernmaster — tavernmaster.top: the room after dark. Oak, candle, brass. */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Mulish:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #1b1512;
+  --surface: #261e19;
+  --text: #f0e7da;
+  --muted: #b1a292;
+  --accent: #d99f3f;
+  --accent-contrast: #1b1512;
+  --border: #392e26;
+  --font-body: 'Mulish', system-ui, sans-serif;
+  --font-heading: 'Fraunces', Georgia, serif;
+  --radius: 10px;
+  --header-bg: #140f0d;
+  --header-text: #f5eee3;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+/* brewhouse is the fleet's other drinking-establishment preset and the two had
+   to be pulled apart deliberately: brewhouse is a light cream page with copper,
+   set in Bitter. This is the same building at night — a brown-black ground,
+   brass instead of copper, and a wonky old-style face with real optical sizing
+   rather than a straight slab. Against valheim, the other dark warm preset, the
+   ground is brown where valheim's is green. */
+
+/* Fraunces is drawn with a lot of personality in its default 'soft' axis; the
+   wonk is the reason it is here, so it is left alone and only the tracking is
+   relaxed, which its wide old-style forms want at display sizes. */
+.hero-title, .article-title { letter-spacing: 0.005em; }

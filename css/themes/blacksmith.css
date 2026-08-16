@@ -1,0 +1,32 @@
+/* blacksmith — blacksmithmaster.top: the forge. Soot, steel, ember orange. */
+@import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #131313;
+  --surface: #1d1c1b;
+  --text: #ece7e2;
+  --muted: #a49b93;
+  --accent: #f2751f;
+  --accent-contrast: #131313;
+  --border: #302d2a;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Zilla Slab', Georgia, serif;
+  --radius: 2px;
+  --header-bg: #0d0c0c;
+  --header-text: #f5efe9;
+  --shadow-color: rgba(0, 0, 0, 0.55);
+  --rule-accent: 4px;
+}
+
+/* craftsman is the fleet's other slab-serif preset and is warm neutrals with a
+   forest green on a light ground. This one is the same family of type doing the
+   opposite job: near-black, almost no radius, and a heavy accent band, because a
+   forge is edges and heat rather than warmth. */
+
+/* The one place the ember is spent on fill rather than a rule — a heated bar
+   rather than a label. */
+.card-category, .eyebrow {
+  background: rgba(242, 117, 31, 0.14);
+  border: 1px solid rgba(242, 117, 31, 0.3);
+  padding: 0.18rem 0.7rem;
+}

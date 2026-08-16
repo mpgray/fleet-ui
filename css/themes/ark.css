@@ -1,0 +1,29 @@
+/* ark — arksurvival.top: volcanic island at dusk. Blue-black rock, amber sun. */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #0e1418;
+  --surface: #182229;
+  --text: #e3ecef;
+  --muted: #9aabb2;
+  --accent: #f0873a;
+  --accent-contrast: #0e1418;
+  --border: #2a3945;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Oswald', system-ui, sans-serif;
+  --radius: 8px;
+  --header-bg: #0a1013;
+  --header-text: #eef5f7;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+/* The blue-black ground is what keeps this off valheim, which is the other
+   dark preset in the fleet and is green-black with a gold accent. Reading them
+   side by side is the only way to tell — so the difference is carried by the
+   hue of --bg and by a condensed sans against valheim's roman caps, not by the
+   accent, which in both cases is warm. */
+
+/* Oswald is condensed and set here at 500/600; its 700 closes the counters at
+   display sizes. The shared -0.02em display tracking is drawn for a normal
+   width face and pinches this one, so it is given back. */
+.article-title, .hero-title, .card-title { letter-spacing: 0.005em; }

@@ -1,0 +1,32 @@
+/* elderscrolls — elderscrolls.top: the hub the four game sites link back to.
+   Franchise-neutral: no province, no era. Warm stone and bronze.
+
+   This file is the reference for the family. All five Elder Scrolls presets set
+   --font-heading to EB Garamond and --font-body to Inter, and differ only in
+   palette, so the subdomains read as siblings rather than as five unrelated
+   sites that happen to share a domain. Changing the face here means changing it
+   in morrowind, skyrim, oblivion and eso in the same commit, or the family stops
+   being one. */
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #f3f1ec;
+  --surface: #ffffff;
+  --text: #2c2823;
+  --muted: #6a635a;
+  --accent: #6b4f2a;
+  --accent-contrast: #ffffff;
+  --border: #ded9d0;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'EB Garamond', Georgia, serif;
+  --radius: 4px;
+  --header-bg: #26221d;
+  --header-text: #f3f1ec;
+  --shadow-color: rgba(44, 40, 35, 0.13);
+  --rule-accent: 2px;
+}
+
+/* The quietest of the five on purpose. A hub whose whole job is to hand a reader
+   off to one of four louder sites should not compete with them, so the accent is
+   a bronze-brown rather than any of the four signature colours — no teal, no ice,
+   no gold, no imperial gilding. */

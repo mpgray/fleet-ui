@@ -1,0 +1,30 @@
+/* morrowind — morrowind.elderscrolls.top: ash and fungus. Volcanic grey ground,
+   a sickly teal. One of five sharing EB Garamond; see elderscrolls.css. */
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #171a19;
+  --surface: #212523;
+  --text: #e6e9e5;
+  --muted: #9ba49e;
+  --accent: #4fb3a5;
+  --accent-contrast: #0f1211;
+  --border: #313733;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'EB Garamond', Georgia, serif;
+  --radius: 3px;
+  --header-bg: #101312;
+  --header-text: #eef1ec;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+/* The teal is the whole identity here and it is the reason rimworld's accent was
+   moved to terracotta: two sites in one fleet reading as "the teal one" is the
+   sort of collision nobody notices until both are open in adjacent tabs. This
+   one is a light teal on a dark ground, which is the inverse of how rimworld
+   uses its accent, so even the near-miss would have read differently — but the
+   near-miss is not worth having. */
+
+/* EB Garamond is an old-style face with a small x-height; at body-adjacent
+   heading sizes its 600 is the practical display weight and 700 fills in. */
+.card-title { font-weight: 600; }

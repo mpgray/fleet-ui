@@ -1,0 +1,29 @@
+/* dune — duneawakening.net: open desert under a night sky. Sand, spice, dark. */
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&family=Barlow:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #f7f0e4;
+  --surface: #fffaf2;
+  --text: #2a2520;
+  --muted: #6b6053;
+  --accent: #a8500b;
+  --accent-contrast: #ffffff;
+  --border: #e6dac6;
+  --font-body: 'Barlow', system-ui, sans-serif;
+  --font-heading: 'Marcellus', Georgia, serif;
+  --radius: 2px;
+  --header-bg: #191b25;
+  --header-text: #f7f0e4;
+  --shadow-color: rgba(42, 37, 32, 0.14);
+  --rule-accent: 3px;
+}
+
+/* solar is the fleet's other sand-and-amber preset, and the two would be hard to
+   tell apart on colour alone: both are a warm light ground with a burnt orange
+   and a dark header. The separation is the type — solar is condensed grotesque
+   throughout, this is a wide roman inscriptional face — and the header, which is
+   a blue-black night rather than solar's daylight navy. */
+
+/* Marcellus has one weight and is drawn with high contrast; at display sizes it
+   wants air, and the shared display tracking pulls it tight. */
+.hero-title, .article-title { font-weight: 400; letter-spacing: 0.01em; }

@@ -1,0 +1,24 @@
+/* rimworld — rim-world.top: a colony on dry ground. Prairie tan, terracotta. */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #f2efe7;
+  --surface: #ffffff;
+  --text: #2d2a25;
+  --muted: #6d675d;
+  --accent: #a8492a;
+  --accent-contrast: #ffffff;
+  --border: #ded8ca;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --radius: 6px;
+  --header-bg: #2f2b25;
+  --header-text: #f2efe7;
+  --shadow-color: rgba(45, 42, 37, 0.14);
+}
+
+/* The accent started as the obvious sci-fi teal and moved to terracotta because
+   morrowind had already taken teal. What is left is the more honest reading
+   anyway: the game is a frontier colony on dry dirt, and the science-fiction part
+   is the premise rather than the texture. The grotesque heading face is where the
+   genre lives instead. */
