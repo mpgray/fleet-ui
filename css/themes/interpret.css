@@ -1,0 +1,25 @@
+/* interpret — interpret.top: warm off-white, deep teal, humanist sans
+   throughout. Deliberately not thingmingle's violet and not library's
+   parchment-and-oxblood: this is the only teal in the fleet. */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&family=Figtree:wght@400;600&display=swap');
+
+:root {
+  --bg: #f7f5f1;
+  --surface: #ffffff;
+  --text: #1f2b2a;
+  --muted: #5c6764;
+  --accent: #10615f;
+  --accent-contrast: #ffffff;
+  --border: #e0dcd4;
+  --font-body: 'Figtree', system-ui, sans-serif;
+  --font-heading: 'Manrope', system-ui, sans-serif;
+  --radius: 8px;
+  --header-bg: #123634;
+  --header-text: #eef4f2;
+  --shadow-color: rgba(31, 43, 42, 0.13);
+  --rule-accent: 3px;
+}
+
+/* Sans headings need the size relationship to do the work that a serif would
+   do by contrast of form, so the eyebrow goes small and wide instead. */
+.eyebrow, .card-category { letter-spacing: 0.1em; }
