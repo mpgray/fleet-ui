@@ -1,0 +1,28 @@
+/* schoolteacher — schoolteacher.cc: cream paper, chalkboard-green header,
+   brick accent, rounded sans. craftsman is the other green preset; it is a
+   forest green *accent* on warm grey with slab serifs, where this puts the
+   green in the header only and answers it with a warm accent and round type.
+   The largest --radius in the fleet, on purpose. */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700&family=Nunito+Sans:wght@400;600&display=swap');
+
+:root {
+  --bg: #fbf7ef;
+  --surface: #ffffff;
+  --text: #2b2a26;
+  --muted: #67635a;
+  --accent: #a8402a;
+  --accent-contrast: #ffffff;
+  --border: #e6dece;
+  --font-body: 'Nunito Sans', system-ui, sans-serif;
+  --font-heading: 'Quicksand', system-ui, sans-serif;
+  --radius: 16px;
+  --header-bg: #22403a;
+  --header-text: #f2efe4;
+  --shadow-color: rgba(43, 42, 38, 0.12);
+  --rule-accent: 4px;
+}
+
+/* --r-1/--r-2/--r-pill multiply --radius, so 16 is already generous on cards
+   and images; the only thing that needs saying here is that the header band
+   is thick enough to read as a chalk tray under the chalkboard. */
+.eyebrow, .card-category { letter-spacing: 0.06em; }

@@ -1,0 +1,28 @@
+/* appraiser — appraiser.top: cool report paper, graphite header, brass accent.
+   The nearest neighbours are bottomlineinsight (navy field, gains green) and
+   craftsman (warm neutrals, forest green, slab). This one stays cool and grey
+   and puts the only warm colour in the accent, so the three do not blur. */
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Public+Sans:wght@400;600&display=swap');
+
+:root {
+  --bg: #f1f3f6;
+  --surface: #ffffff;
+  --text: #23282e;
+  --muted: #5b646f;
+  --accent: #85591a;
+  --accent-contrast: #ffffff;
+  --border: #d9dee5;
+  --font-body: 'Public Sans', system-ui, sans-serif;
+  --font-heading: 'Lora', Georgia, serif;
+  --radius: 3px;
+  --header-bg: #262c34;
+  --header-text: #eef1f5;
+  --shadow-color: rgba(35, 40, 46, 0.14);
+  --rule-accent: 2px;
+}
+
+/* A ruled top edge on every card, the way a report form's grid reads. Border
+   colour, not accent: five brass lines down a page of comps would compete with
+   the header band, which is the one place the accent should be loud. */
+.card { border-top: var(--rule-accent) solid var(--border); }
+.eyebrow, .card-category { letter-spacing: 0.08em; }
