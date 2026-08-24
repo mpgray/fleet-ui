@@ -41,31 +41,6 @@ permissions:
 # immediately — no commit, no PR, no workflow edit. The brake has to live
 # somewhere an agent cannot reach. Anything other than the literal `off` —
 # including unset — leaves them enabled.
-  # The credential, sent as x-api-key. This was pinned to '' to stop anything
-  # falling back to Anthropic directly, but the empty value failed every run
-  # outright:
-  #
-  #   Environment variable validation failed: Either ANTHROPIC_API_KEY,
-  #   CLAUDE_CODE_OAUTH_TOKEN, or workload identity federation is required
-  #
-  # The action requires one of these and does not count ANTHROPIC_AUTH_TOKEN.
-  # The endpoint stays pinned by ANTHROPIC_BASE_URL above; if a request ever did
-  # reach Anthropic it would 401 on an OpenRouter key rather than pass quietly.
-  ANTHROPIC_API_KEY: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
-  # `--model` pins only the TOP-LEVEL model. Claude Code resolves the `opus`,
-  # `sonnet` and `haiku` aliases separately — subagents ask for them by name,
-  # `opusplan` uses opus while planning, and background traffic uses haiku — and
-  # when these three are empty each alias falls back to Anthropic's own default
-  # id. That is the hole: a job pinned to a cheap model can still emit an
-  # Opus-class request through an alias nobody chose. The 2026-08-10 runs logged
-  # all three as blank across all three repos. Point them at ids THIS endpoint
-  # serves, so there is no id in play that the MODEL_* variables did not select.
-  #
-  # Deliberately not set: FALLBACK_FOR_ALL_PRIMARY_MODELS. Any non-empty value,
-  # including the string "0", turns automatic primary-model fallback ON.
-  ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ vars.MODEL_ALIAS_OPUS || vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
-  ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ vars.MODEL_ALIAS_SONNET || vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
-  ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ vars.MODEL_ALIAS_HAIKU || vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
 
 jobs:
   audit:
