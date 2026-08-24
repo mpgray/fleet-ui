@@ -122,7 +122,7 @@ jobs:
         uses: ./.github/actions/ai-preflight
         with:
           base_url: ${{ steps.m.outputs.base_url }}
-          token: ${{ steps.m.outputs.provider == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
+          token: ${{ steps.m.outputs.credential == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
           model: ${{ steps.m.outputs.model }}
 
       - uses: anthropics/claude-code-action@v1
@@ -149,8 +149,8 @@ jobs:
           # this env had to be added by hand: the sweep that wired every other
           # agent job keyed off the AGENT_PAT pattern and did not match here.
           ANTHROPIC_BASE_URL: ${{ steps.m.outputs.base_url }}
-          ANTHROPIC_AUTH_TOKEN: ${{ steps.m.outputs.provider == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ steps.m.outputs.provider == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_AUTH_TOKEN: ${{ steps.m.outputs.credential == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ steps.m.outputs.credential == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
           # Unset aliases fall back to Anthropic's own default ids, which is how
           # a job pinned to a cheap model emits an Opus-class request nobody
           # chose. Default them to this job's own model.

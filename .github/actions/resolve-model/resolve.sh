@@ -105,4 +105,20 @@ split_model "$HAIKU";   emit haiku  "$SPLIT_MODEL"
 emit provider "$PROVIDER"
 emit base_url "$BASE"
 
+# Which credential the caller must send, decided by the ENDPOINT WE LANDED ON
+# rather than by the prefix that was typed.
+#
+# Those two come apart in one case and it is a silent 401: no prefix, and
+# AI_BASE_URL empty. The endpoint then falls back to OpenRouter while the prefix
+# still says "nothing", so keying the credential off the prefix sends the
+# gateway's virtual key to OpenRouter. Every job fails with a credential error
+# on a configuration that looks entirely reasonable — and that configuration is
+# exactly "unset AI_BASE_URL to go back to OpenRouter", the most obvious way out
+# of a gateway outage.
+if [ "$BASE" = "$OPENROUTER_BASE" ]; then
+  emit credential openrouter
+else
+  emit credential gateway
+fi
+
 echo "resolved: provider=${PROVIDER:-<unprefixed>} endpoint=$BASE"

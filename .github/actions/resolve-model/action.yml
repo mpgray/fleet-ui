@@ -46,6 +46,14 @@ outputs:
   base_url:
     description: Origin for ANTHROPIC_BASE_URL, no trailing slash
     value: ${{ steps.resolve.outputs.base_url }}
+  credential:
+    description: >-
+      'openrouter' or 'gateway' — which secret the caller must send. Derived from
+      the endpoint actually chosen, NOT from the prefix: with no prefix and an
+      empty AI_BASE_URL the endpoint falls back to OpenRouter while the prefix
+      says nothing, and keying off the prefix there sends the gateway key to
+      OpenRouter. Always branch on this, never on `provider`.
+    value: ${{ steps.resolve.outputs.credential }}
   model:
     description: The primary model id, prefix stripped
     value: ${{ steps.resolve.outputs.model }}
