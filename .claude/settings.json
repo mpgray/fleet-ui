@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-token-contract.sh",
+            "timeout": 10,
+            "statusMessage": "Checking theme token contract"
+          }
+        ]
+      }
+    ]
+  }
+}
