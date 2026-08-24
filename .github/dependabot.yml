@@ -1,0 +1,31 @@
+# Dependency updates.
+#
+# ## Saturday, deliberately
+#
+# The fleet's code-health agents run Monday, staggered three hours apart across
+# six repos. Landing Dependabot PRs in that same window means the audit agent
+# reads a diff full of version bumps it did not make and has no opinion worth
+# having about. Saturday gives them two days to be reviewed or closed first.
+#
+# ## These are not agent PRs, and that is correct
+#
+# agent-guardrails.yml identifies an agent PR by an `agent/` branch or an
+# `Agent-Model:` commit trailer. Dependabot has neither, so its PRs are gated by
+# ci.yml alone — which is the right treatment: the guardrails exist to stop an
+# agent editing the things that review it, and Dependabot is not an agent.
+# Verify this on the first PR rather than trusting the reasoning.
+#
+# ## open-pull-requests-limit
+#
+# Five is the default and is too many for a fleet of six repos: thirty open
+# dependency PRs is a queue nobody reads. Three per ecosystem, per repo.
+version: 2
+updates:
+  # Pinned action SHAs and @v3-style tags both drift. This is the ecosystem that
+  # would have caught a deprecated runner image before a deploy did.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+    open-pull-requests-limit: 3

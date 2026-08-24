@@ -28,8 +28,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       # One PR per consumer, and one failing consumer must not stop the other.
+      #
+      # toolbox joined on 2026-08-24. It has vendored fleet-ui since it was
+      # written and was never in this list; its pin was current at the time
+      # only because someone had been moving it by hand. That is the state this
+      # workflow exists to make unnecessary — the risk was never that toolbox
+      # was behind, it was that nothing would tell you when it fell behind.
+      #
+      # ai-help is deliberately NOT here. It renders fleet themes but keeps its
+      # CSS inline and has no vendor/fleet-ui; see the comment at the top of
+      # ai-help/app/templates/base.html, which records that as an open decision
+      # rather than an oversight. Adding it means settling that decision first.
       matrix:
-        consumer: [articles-ai, game-db]
+        consumer: [articles-ai, game-db, toolbox]
       fail-fast: false
 
     steps:
