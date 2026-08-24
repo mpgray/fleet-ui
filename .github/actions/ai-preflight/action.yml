@@ -77,6 +77,19 @@ runs:
             head -c 400 /tmp/ai-preflight.json; exit 1 ;;
           000)
             echo "::error::Could not reach $BASE at all."; exit 1 ;;
+          502|503|504|521|522|523|524)
+            # The endpoint's FRONT DOOR answered; the thing behind it did not.
+            # Cloudflare's 52x family especially: 523 is "Origin Is Unreachable"
+            # and arrives in milliseconds, because the edge already knows the
+            # origin is down and never waits for it.
+            #
+            # Called out separately because the generic arm below reads as a
+            # problem with the request, and a self-hosted gateway behind a proxy
+            # is the most likely endpoint here — so "my model id is wrong" is
+            # the wrong first place to look, and it is where the other messages
+            # send you.
+            echo "::error::$BASE is up but its ORIGIN is not answering (HTTP $code). This is an infrastructure failure at the endpoint, not a wrong model id or credential. If a MODEL_* variable names 'litellm:', switching it to an 'openrouter:' prefix routes this job around the outage."
+            head -c 400 /tmp/ai-preflight.json; exit 1 ;;
           *)
             echo "::error::Unexpected HTTP $code from $BASE"
             head -c 400 /tmp/ai-preflight.json; exit 1 ;;
