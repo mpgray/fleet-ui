@@ -41,34 +41,6 @@ permissions:
 # immediately — no commit, no PR, no workflow edit. The brake has to live
 # somewhere an agent cannot reach. Anything other than the literal `off` —
 # including unset — leaves them enabled.
-env:
-  ANTHROPIC_BASE_URL: ${{ vars.AI_BASE_URL || 'https://openrouter.ai/api' }}
-  ANTHROPIC_AUTH_TOKEN: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
-  # The credential, sent as x-api-key. This was pinned to '' to stop anything
-  # falling back to Anthropic directly, but the empty value failed every run
-  # outright:
-  #
-  #   Environment variable validation failed: Either ANTHROPIC_API_KEY,
-  #   CLAUDE_CODE_OAUTH_TOKEN, or workload identity federation is required
-  #
-  # The action requires one of these and does not count ANTHROPIC_AUTH_TOKEN.
-  # The endpoint stays pinned by ANTHROPIC_BASE_URL above; if a request ever did
-  # reach Anthropic it would 401 on an OpenRouter key rather than pass quietly.
-  ANTHROPIC_API_KEY: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
-  # `--model` pins only the TOP-LEVEL model. Claude Code resolves the `opus`,
-  # `sonnet` and `haiku` aliases separately — subagents ask for them by name,
-  # `opusplan` uses opus while planning, and background traffic uses haiku — and
-  # when these three are empty each alias falls back to Anthropic's own default
-  # id. That is the hole: a job pinned to a cheap model can still emit an
-  # Opus-class request through an alias nobody chose. The 2026-08-10 runs logged
-  # all three as blank across all three repos. Point them at ids THIS endpoint
-  # serves, so there is no id in play that the MODEL_* variables did not select.
-  #
-  # Deliberately not set: FALLBACK_FOR_ALL_PRIMARY_MODELS. Any non-empty value,
-  # including the string "0", turns automatic primary-model fallback ON.
-  ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ vars.MODEL_ALIAS_OPUS || vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
-  ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ vars.MODEL_ALIAS_SONNET || vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
-  ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ vars.MODEL_ALIAS_HAIKU || vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
 
 jobs:
   audit:
@@ -111,12 +83,22 @@ jobs:
           } > health.txt 2>&1
           cat health.txt
 
+      - name: Resolve the model and endpoint
+        id: m
+        uses: ./.github/actions/resolve-model
+        with:
+          primary: ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
+          opus: ${{ vars.MODEL_ALIAS_OPUS }}
+          sonnet: ${{ vars.MODEL_ALIAS_SONNET }}
+          haiku: ${{ vars.MODEL_ALIAS_HAIKU }}
+          default_base_url: ${{ vars.AI_BASE_URL }}
+
       - name: Preflight the AI endpoint
         uses: ./.github/actions/ai-preflight
         with:
-          base_url: ${{ vars.AI_BASE_URL || 'https://openrouter.ai/api' }}
-          token: ${{ secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
-          model: ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
+          base_url: ${{ steps.m.outputs.base_url }}
+          token: ${{ steps.m.outputs.credential == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
+          model: ${{ steps.m.outputs.model }}
 
       - uses: anthropics/claude-code-action@v1
         continue-on-error: true
@@ -136,6 +118,20 @@ jobs:
         # With GITHUB_TOKEN it is the actual ceiling.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Endpoint and credential, chosen by the prefix on this job's MODEL_*
+          # variable. GH_TOKEN above is GITHUB_TOKEN rather than AGENT_PAT — a
+          # deliberate choice explained in the block above it, and the reason
+          # this env had to be added by hand: the sweep that wired every other
+          # agent job keyed off the AGENT_PAT pattern and did not match here.
+          ANTHROPIC_BASE_URL: ${{ steps.m.outputs.base_url }}
+          ANTHROPIC_AUTH_TOKEN: ${{ steps.m.outputs.credential == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ steps.m.outputs.credential == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
+          # Unset aliases fall back to Anthropic's own default ids, which is how
+          # a job pinned to a cheap model emits an Opus-class request nobody
+          # chose. Default them to this job's own model.
+          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ steps.m.outputs.opus || steps.m.outputs.model }}
+          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ steps.m.outputs.sonnet || steps.m.outputs.model }}
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ steps.m.outputs.haiku || steps.m.outputs.model }}
           # Labels every request this job makes, in OpenRouter's activity log.
           # The point is the requests the GitHub log CANNOT show you: alias
           # traffic, background calls, retries. A key tells you which repo; this
@@ -157,7 +153,7 @@ jobs:
           # job needs; the prompt is what lands the plane. timeout-minutes is
           # the real runaway guard.
           claude_args: >-
-            --model ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
+            --model ${{ steps.m.outputs.model }}
             --max-turns 30
             --allowedTools "Bash(git log:*),Bash(git grep:*),Bash(gh issue:*),Read,Grep,Glob"
           prompt: |

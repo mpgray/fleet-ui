@@ -1,0 +1,81 @@
+name: Resolve model
+description: Turn `provider:model` strings into one endpoint plus bare model ids.
+
+# The same `provider:model` syntax the admin Settings page uses, in the
+# repository variables. `litellm:qwen3-coder` and `openrouter:deepseek/x` name
+# where the request goes; a bare id keeps the previous behaviour exactly.
+#
+# Why this is worth an action rather than an expression in `env:`:
+#
+#   * A workflow-level `env:` block is one static value per key. It cannot pick
+#     an endpoint per job, so review-on-LiteLLM and notes-on-OpenRouter was not
+#     expressible.
+#   * `${{ vars.AI_BASE_URL || '...' }}` only falls back when AI_BASE_URL is
+#     EMPTY. A variable that is set but pointing at a dead host has no fallback
+#     at all — every job fails and no expression can rescue it. An
+#     `openrouter:` prefix is the per-job escape hatch for exactly that.
+#
+# Deliberately NOT an output: the credential. The caller picks it from
+# `provider`, so no secret passes through a step output.
+
+inputs:
+  primary:
+    description: The MODEL_* value for this job, e.g. 'litellm:qwen3-coder'
+    required: true
+  opus:
+    description: MODEL_ALIAS_OPUS, if set
+    required: false
+    default: ''
+  sonnet:
+    description: MODEL_ALIAS_SONNET, if set
+    required: false
+    default: ''
+  haiku:
+    description: MODEL_ALIAS_HAIKU, if set
+    required: false
+    default: ''
+  default_base_url:
+    description: vars.AI_BASE_URL — the endpoint an unprefixed or 'litellm:' model resolves to
+    required: false
+    default: ''
+
+outputs:
+  provider:
+    description: "'litellm', 'openrouter', or empty when nothing carried a prefix"
+    value: ${{ steps.resolve.outputs.provider }}
+  base_url:
+    description: Origin for ANTHROPIC_BASE_URL, no trailing slash
+    value: ${{ steps.resolve.outputs.base_url }}
+  credential:
+    description: >-
+      'openrouter' or 'gateway' — which secret the caller must send. Derived from
+      the endpoint actually chosen, NOT from the prefix: with no prefix and an
+      empty AI_BASE_URL the endpoint falls back to OpenRouter while the prefix
+      says nothing, and keying off the prefix there sends the gateway key to
+      OpenRouter. Always branch on this, never on `provider`.
+    value: ${{ steps.resolve.outputs.credential }}
+  model:
+    description: The primary model id, prefix stripped
+    value: ${{ steps.resolve.outputs.model }}
+  opus:
+    description: Alias model id, prefix stripped
+    value: ${{ steps.resolve.outputs.opus }}
+  sonnet:
+    description: Alias model id, prefix stripped
+    value: ${{ steps.resolve.outputs.sonnet }}
+  haiku:
+    description: Alias model id, prefix stripped
+    value: ${{ steps.resolve.outputs.haiku }}
+
+runs:
+  using: composite
+  steps:
+    - id: resolve
+      shell: bash
+      env:
+        PRIMARY: ${{ inputs.primary }}
+        OPUS: ${{ inputs.opus }}
+        SONNET: ${{ inputs.sonnet }}
+        HAIKU: ${{ inputs.haiku }}
+        AI_BASE_URL: ${{ inputs.default_base_url }}
+      run: ${{ github.action_path }}/resolve.sh
