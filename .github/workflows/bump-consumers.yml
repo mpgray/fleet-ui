@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - name: Check out this commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: fleet-ui
           # Full history, because "Move the pin" below runs
@@ -59,7 +59,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check out ${{ matrix.consumer }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: mpgray/${{ matrix.consumer }}
           token: ${{ secrets.FLEET_PIN_TOKEN }}
