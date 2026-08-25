@@ -9,9 +9,11 @@
 #
 #   - minor and patch bumps collapse into ONE PR per ecosystem. A lockfile
 #     refresh is a single review, not eleven.
-#   - major bumps stay individual, deliberately. A major is a breaking change
-#     with release notes worth reading, and burying it in a group PR next to a
-#     patch is how a breaking change ships unread.
+#   - Python majors stay individual, deliberately. A major there is a breaking
+#     change with release notes worth reading, and burying it in a group PR
+#     next to a patch is how a breaking change ships unread.
+#   - Action majors are grouped, because they are not that. checkout 4 to 7
+#     changed no input this fleet passes; CI passing on the group IS the review.
 #
 # ## Why cron, and what it costs
 #
@@ -50,7 +52,18 @@ updates:
       cronjob: "0 6 1,15 * *"
     open-pull-requests-limit: 3
     groups:
-      actions-minor-and-patch:
+      # Majors are grouped HERE and nowhere else.
+      #
+      # An action major is almost always a runner or Node bump - checkout 4 to
+      # 7 changed no inputs this fleet uses - and CI either passes on it or it
+      # does not, so the group PR is itself the test. There are no release notes
+      # worth reading one at a time. On 2026-08-25 four separate action-major
+      # PRs landed in one night for exactly this reason.
+      #
+      # The uv group above deliberately does NOT include major: a Python major
+      # can change runtime behaviour that no test here asserts on, and that is
+      # the case where reading one changelog actually pays.
+      actions-all:
         applies-to: version-updates
         patterns: ["*"]
-        update-types: ["minor", "patch"]
+        update-types: ["major", "minor", "patch"]
