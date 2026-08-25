@@ -10,8 +10,16 @@ name: Bump consumer pins
 # PRs it opens run each consumer's own test suite and get the same AI review as
 # anything else.
 #
+# ## One rolling PR per consumer, not one per commit
+#
+# The branch is `fleet-ui/pin` and is reused. Opening `fleet-ui/<sha>` per push
+# meant every fleet-ui commit fanned out into three more PRs that all moved the
+# same submodule pointer, so merging one made the rest conflict. See the long
+# comment on the push step for what that looked like in practice.
+#
 # Requires: FLEET_PIN_TOKEN — a fine-grained PAT with Contents: write and
-# Pull requests: write on mpgray/articles-ai and mpgray/game-db. The default
+# Pull requests: write on mpgray/articles-ai, mpgray/game-db and
+# mpgray/toolbox — every repo in the matrix below. The default
 # GITHUB_TOKEN cannot do this: it is scoped to this repository only.
 
 on:
@@ -113,7 +121,7 @@ jobs:
           echo "new=${NEW:0:12}" >> "$GITHUB_OUTPUT"
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Open the pull request
+      - name: Open or update the rolling pin pull request
         if: steps.bump.outputs.changed == 'true'
         working-directory: consumer
         env:
@@ -123,19 +131,59 @@ jobs:
           # expressions are substituted as raw text BEFORE bash sees the line —
           # so a subject containing a backtick or $(...) was a command running
           # on a runner that holds FLEET_PIN_TOKEN, a credential with write
-          # access to both consumers. Trusted-ish input, but nothing about the
+          # access to every consumer. Trusted-ish input, but nothing about the
           # `env:` form costs anything.
           NEW_SHA: ${{ steps.bump.outputs.new }}
           OLD_SHA: ${{ steps.bump.outputs.old }}
           NEW_LOG: ${{ steps.bump.outputs.log }}
         run: |
           set -euo pipefail
-          BRANCH="fleet-ui/$NEW_SHA"
+
+          # ONE branch, reused forever — not one per fleet-ui commit.
+          #
+          # This used to be `fleet-ui/$NEW_SHA`, which opened a fresh branch and
+          # a fresh PR on every push to fleet-ui main. Four fleet-ui commits
+          # meant twelve open PRs across three consumers, every one of them
+          # moving the SAME submodule pointer, so merging any one made the other
+          # eleven conflict. On 2026-08-25 that was nine open pin PRs, seven of
+          # them conflicting, and the newest — the only one worth reviewing —
+          # was indistinguishable from the stale ones in the list.
+          #
+          # A rolling branch collapses that to at most one open PR per consumer,
+          # always at the current fleet-ui HEAD. Intermediate pins are not worth
+          # reviewing individually: nothing deploys from fleet-ui, so skipping
+          # from pin A to pin C is the same review as A to B to C, minus two
+          # merge conflicts.
+          BRANCH="fleet-ui/pin"
+
           git config user.name  'fleet-ui bump'
           git config user.email 'actions@github.com'
 
-          # Reuse the branch if this workflow already ran for this commit —
-          # a re-run should update the existing PR, not fail on a duplicate.
+          # Never clobber a human.
+          #
+          # The per-SHA branch could be force-pushed safely because nothing else
+          # ever touched it. A rolling branch cannot: if someone pushed a fixup
+          # onto this PR — a snapshot updated for the new CSS, a template tweak
+          # the macro change required — a force-push here destroys it with no
+          # reflog they can reach. So: bail out and say so, rather than reset.
+          #
+          # One commit by 'fleet-ui bump' is this workflow's own previous run
+          # and is safe to replace. Anything else is not ours.
+          if git rev-parse --verify --quiet "origin/$BRANCH" >/dev/null; then
+            AHEAD="$(git rev-list --count "origin/main..origin/$BRANCH")"
+            AUTHORS="$(git log --format='%an' "origin/main..origin/$BRANCH" | sort -u | tr '\n' ',')"
+            if [ "$AHEAD" -gt 1 ] || [ "$AUTHORS" != "fleet-ui bump," ]; then
+              echo "::warning::$BRANCH carries work that is not this workflow's" \
+                   "($AHEAD commit(s), authors: $AUTHORS). Refusing to force-push over it."
+              gh pr comment "$BRANCH" --body \
+                "fleet-ui has moved on to \`$NEW_SHA\`, but this branch carries commits this workflow did not make, so it was left alone. Merge or close this PR and the next fleet-ui push will open a fresh one at the current HEAD." \
+                2>/dev/null || true
+              exit 0
+            fi
+          fi
+
+          # Branch off the consumer's main every time, so the PR is always
+          # "main plus one pin commit" and never accumulates a stale base.
           git checkout -B "$BRANCH"
           git add vendor/fleet-ui
           git commit -m "Bump fleet-ui to $NEW_SHA
@@ -144,19 +192,21 @@ jobs:
 
           Opened by fleet-ui/.github/workflows/bump-consumers.yml. Structural CSS
           and the shared macros live in one repo and are pinned by SHA in each
-          consumer; this is the pin moving. Until both consumers are on the same
-          commit the admin dashboard reports the two sites as drifted, which is
-          the alarm working rather than a fault."
+          consumer; this is the pin moving. Until every consumer is on the same
+          commit the admin dashboard reports the sites as drifted, which is the
+          alarm working rather than a fault."
           git push --force-with-lease origin "$BRANCH"
 
-          if gh pr view "$BRANCH" >/dev/null 2>&1; then
-            echo "pull request already open for $BRANCH — updated in place"
-            exit 0
-          fi
+          TITLE="Bump fleet-ui to $NEW_SHA"
 
-          gh pr create \
-            --title "Bump fleet-ui to $NEW_SHA" \
-            --body "$(cat <<BODY
+          # A plain heredoc redirect to a file, NOT `$(cat <<BODY ... BODY)`.
+          # The command-substitution form is what this step used to use, and it
+          # parses only on bash 4+; on the bash 3.2 that ships with macOS a
+          # local `bash -n` of this script reports a syntax error that does not
+          # exist on the runner. A form that checks the same everywhere is worth
+          # more than one saved variable.
+          BODY_FILE="$RUNNER_TEMP/fleet-ui-pin-body.md"
+          cat > "$BODY_FILE" <<BODY
           Moves the pinned shared-UI commit from \`$OLD_SHA\` to \`$NEW_SHA\`.
 
           ### fleet-ui commits in this range
@@ -169,17 +219,31 @@ jobs:
           this is the only point at which a change to shared CSS or a shared
           macro is reviewed and tested against the site that renders it.
 
+          ### This is a rolling branch
+          \`fleet-ui/pin\` is reused and force-updated on every fleet-ui push, so
+          this PR always shows the current HEAD rather than one pin in a queue of
+          them. If you push a fixup here, the workflow stops updating it and says
+          so instead of overwriting your commit.
+
           ### What to check
-          - The consumer's own tests pass — several of them assert on markup
-            these macros produce.
-          - The other consumer has an identical PR. Merging one and not the
-            other is what the drift alarm on the admin dashboard is for, and it
-            will fire until both are on the same commit.
+          - The consumer's own tests pass, since several of them assert on the
+            markup these macros produce.
+          - The other consumers have an identical PR. Merging one and not the
+            others is what the drift alarm on the admin dashboard is for, and it
+            will fire until every consumer is on the same commit.
 
           ### Risk
           Visual. Nothing here changes behaviour, and nothing here is covered by
           a screenshot test, so a bad merge looks like a page that renders in
           the wrong colours rather than a page that errors.
           BODY
-          )" \
-            --label fleet-ui
+
+          # The branch is stable, so the PR usually already exists and its title
+          # still names the OLD sha. Edit it rather than leaving a PR whose title
+          # disagrees with its diff.
+          if gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
+            gh pr edit "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE"
+            echo "updated the open pin PR to $NEW_SHA"
+          else
+            gh pr create --title "$TITLE" --body-file "$BODY_FILE" --label fleet-ui
+          fi
