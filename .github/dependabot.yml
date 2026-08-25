@@ -1,24 +1,44 @@
 # Dependency updates.
 #
-# ## Saturday, deliberately
+# ## Fortnightly, and grouped
 #
-# The fleet's code-health agents run Monday, staggered three hours apart across
-# six repos. Landing Dependabot PRs in that same window means the audit agent
-# reads a diff full of version bumps it did not make and has no opinion worth
-# having about. Saturday gives them two days to be reviewed or closed first.
+# Six repos x two ecosystems x three PRs was up to thirty-six open dependency
+# PRs. That is a queue nobody reads, and therefore a queue that hides the one
+# bump that mattered. Two changes fix it, and the grouping is the bigger of the
+# two:
+#
+#   - minor and patch bumps collapse into ONE PR per ecosystem. A lockfile
+#     refresh is a single review, not eleven.
+#   - major bumps stay individual, deliberately. A major is a breaking change
+#     with release notes worth reading, and burying it in a group PR next to a
+#     patch is how a breaking change ships unread.
+#
+# ## Why cron, and what it costs
+#
+# Dependabot has no fortnightly interval - daily, weekly, monthly, quarterly,
+# and then straight to cron. So this is cron, on the 1st and the 15th, in UTC
+# like every other schedule in the fleet.
+#
+# That loses the Saturday alignment the weekly schedule had. Saturday existed to
+# keep dependency PRs out of Monday's staggered code-health window, so that the
+# audit agent never reads a diff full of version bumps it did not make. The 1st
+# or the 15th lands on a Monday roughly one time in seven; when it does, merge
+# or close the group PR before that repo's agent runs. Cron cannot express
+# "every other Saturday" - day-of-month and day-of-week are OR'd, not AND'd.
 #
 # ## These are not agent PRs, and that is correct
 #
 # agent-guardrails.yml identifies an agent PR by an `agent/` branch or an
 # `Agent-Model:` commit trailer. Dependabot has neither, so its PRs are gated by
-# ci.yml alone — which is the right treatment: the guardrails exist to stop an
+# ci.yml alone - which is the right treatment: the guardrails exist to stop an
 # agent editing the things that review it, and Dependabot is not an agent.
-# Verify this on the first PR rather than trusting the reasoning.
 #
-# ## open-pull-requests-limit
+# ## Security updates are deliberately NOT grouped
 #
-# Five is the default and is too many for a fleet of six repos: thirty open
-# dependency PRs is a queue nobody reads. Three per ecosystem, per repo.
+# `applies-to: version-updates` scopes every group below to routine bumps.
+# Dependabot security PRs stay ungrouped and keep their own schedule - a CVE fix
+# must not wait for the 15th, and must not be reviewed as one line inside a
+# twelve-package diff.
 version: 2
 updates:
   # Pinned action SHAs and @v3-style tags both drift. This is the ecosystem that
@@ -26,6 +46,11 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "saturday"
+      interval: "cron"
+      cronjob: "0 6 1,15 * *"
     open-pull-requests-limit: 3
+    groups:
+      actions-minor-and-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
