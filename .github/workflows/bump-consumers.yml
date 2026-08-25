@@ -245,5 +245,13 @@ jobs:
             gh pr edit "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE"
             echo "updated the open pin PR to $NEW_SHA"
           else
+            # Create the label first, idempotently. toolbox joined the matrix
+            # without one, so `gh pr create --label fleet-ui` opened the PR and
+            # THEN exited 1 on the missing label - a red job for work that had
+            # already succeeded, which is the kind of failure you learn to
+            # ignore and then miss a real one behind. A consumer added later
+            # would hit exactly the same wall.
+            gh label create fleet-ui --color BFD4F2 \
+              --description 'Moves the vendored fleet-ui pin' 2>/dev/null || true
             gh pr create --title "$TITLE" --body-file "$BODY_FILE" --label fleet-ui
           fi
