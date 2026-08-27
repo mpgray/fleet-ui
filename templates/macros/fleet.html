@@ -50,3 +50,38 @@
   </section>
   {%- endif -%}
 {% endmacro %}
+
+{#
+  The per-site identity marker, read by articles-ai's fleet health checker.
+
+  WHY THIS IS HERE AND NOT IN EACH REPO. It began as one line in articles-ai's
+  own base template, and the consequence arrived the same day: every db.* domain
+  reported down, because game-db serves those and never had the line. A tag that
+  four codebases must emit identically is exactly the thing this file already
+  exists to hold — the same argument the cross-link nav above makes, for the
+  same reason.
+
+  WHAT IT IS FOR. A 200 response proves something answered. It does not prove
+  WHICH site answered, and an NPM proxy host pointed at the wrong container
+  returns a cheerful 200 of somebody else's site while every droplet metric
+  stays green. This tag is what makes that detectable.
+
+  PASS THE SLUG OF THE BLOG, not of the pack, the game or the tool. Companions
+  get it from `slug` in the /fleet/site.json payload they already cache; the
+  blog itself has it on its own site row. A companion and its parent blog
+  deliberately serve the SAME value — they are one product wearing two
+  hostnames, and the checker treats them as such.
+
+  NEVER pass a display name. It is editable, so renaming a site would report a
+  false outage; and Jinja escapes & < > ' ", so a name like "Renter's Rights"
+  renders as Renter&#39;s Rights and never matches what the checker looks for.
+  A slug is an identifier and has neither problem.
+
+  Emits nothing at all when it has no slug. A site that cannot supply one is
+  checked on its status code alone and says so in the admin — a weaker check,
+  but an honest one. Emitting an empty marker would be worse than emitting none:
+  it would look like an answer.
+#}
+{% macro site_marker(slug) -%}
+  {%- if slug %}<meta name="x-fleet-site" content="{{ slug }}">{% endif -%}
+{%- endmacro %}
