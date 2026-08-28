@@ -29,6 +29,97 @@
 
 
 {#
+  The same links, split across the two header rows.
+
+  fleet_nav above renders one flat list, which is what the single-row header
+  needed. The two-row header needs the list PARTITIONED, and the partition is
+  editorial rather than cosmetic:
+
+    * a companion site — a database, a toolbox, a store — is another face of
+      this product, so it sits beside the search form on row one;
+    * a SIBLING is a different product that happens to share an owner. It goes
+      under one "More" control at the end of row two, because a reader looking
+      for a category should not have to read past six other blogs to find one.
+
+  Both rows are rendered by this one macro, selected with `slot`, so the
+  partition is written once. A macro cannot return a list in Jinja, and two
+  macros that each re-derive "which links are siblings" is exactly the drift the
+  rest of this file exists to prevent.
+
+  `menus` is optional: {url: [{name, url}, ...]}. A link with entries becomes a
+  disclosure rather than a plain anchor, and the first entry inside it is the
+  link to the companion's own front page — so the destination is never lost by
+  turning the pill into a menu. Passing nothing gives plain anchors, which is
+  what every consumer gets until it has a menu to supply.
+#}
+{% macro fleet_nav_split(links, current_url='', slot='primary', menus=None,
+                         max_primary=3, more_label='More') %}
+  {%- set here = (current_url or '').rstrip('/') -%}
+  {%- set menus = menus or {} -%}
+  {%- set ns = namespace(primary=[], more=[]) -%}
+  {%- for link in links or [] -%}
+    {%- if (link.url or '').rstrip('/') != here -%}
+      {#- The link back to the blog is never demoted and never counted against
+          the cap. On an extension site it is the way home, and burying the way
+          home under "More" to make room for a sister blog is backwards. -#}
+      {%- if link.kind == 'blog' -%}
+        {%- set ns.primary = ns.primary + [link] -%}
+      {%- elif link.kind == 'sibling' or ns.primary | length >= max_primary -%}
+        {%- set ns.more = ns.more + [link] -%}
+      {%- else -%}
+        {%- set ns.primary = ns.primary + [link] -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+
+  {%- if slot == 'primary' -%}
+    {%- if ns.primary -%}
+    <div class="fleet-links">
+      {%- for link in ns.primary -%}
+        {{ _fleet_item(link, menus.get(link.url) or menus.get((link.url or '').rstrip('/'))) }}
+      {%- endfor -%}
+    </div>
+    {%- endif -%}
+  {%- elif slot == 'more' -%}
+    {%- if ns.more -%}
+    <details class="fleet-sub fleet-more">
+      <summary>{{ more_label }}<span class="fleet-caret" aria-hidden="true"></span></summary>
+      <div class="fleet-sub-panel">
+        {%- for link in ns.more -%}
+          <a href="{{ link.url }}">{{ link.label }}<span aria-hidden="true"> &rarr;</span></a>
+        {%- endfor -%}
+      </div>
+    </details>
+    {%- endif -%}
+  {%- endif -%}
+{% endmacro %}
+
+
+{#
+  One companion: a pill when it has nothing under it, a disclosure when it does.
+
+  A <details> and not a hover menu, on every width. Hover has no keyboard or
+  touch equivalent without script, and the whole header is deliberately
+  scriptless — the same argument the hamburger already makes one file over.
+#}
+{% macro _fleet_item(link, groups) %}
+  {%- if groups -%}
+    <details class="fleet-sub">
+      <summary>{{ link.label }}<span class="fleet-caret" aria-hidden="true"></span></summary>
+      <div class="fleet-sub-panel">
+        <a class="fleet-sub-home" href="{{ link.url }}">{{ link.label }} home<span aria-hidden="true"> &rarr;</span></a>
+        {%- for group in groups -%}
+          <a href="{{ group.url }}">{{ group.name }}</a>
+        {%- endfor -%}
+      </div>
+    </details>
+  {%- else -%}
+    <a class="fleet-link" href="{{ link.url }}">{{ link.label }}<span aria-hidden="true"> &rarr;</span></a>
+  {%- endif -%}
+{% endmacro %}
+
+
+{#
   Guides from the companion blog that mention the thing on this page.
 
   Rendered on an extension site, pointing back at the blog. Deliberately plain:
