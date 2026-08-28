@@ -794,6 +794,13 @@ summary:focus-visible,
   color: var(--muted);
   margin: 0 0 var(--space-2);
 }
+/* A second block in the same rail. It needs air above it and a rule to say it
+   is a different list, or the two read as one list with a word in the middle. */
+.aside-heading-second {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--rule) solid var(--border);
+}
 .aside-list { list-style: none; margin: 0; padding: 0; }
 .aside-list li + li { border-top: var(--rule) solid var(--border); }
 .aside-list a {
