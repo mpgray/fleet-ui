@@ -74,45 +74,70 @@
 
   {%- if slot == 'primary' -%}
     {%- if ns.primary -%}
+    {#- The radio that means "nothing is open". Every menu control on the page
+        shares one radio group, so opening one closes the others, and the scrim
+        behind an open menu points here — which is what makes clicking away
+        close it. Rendered once, by the primary slot, before anything that
+        needs it: `~` only reaches later siblings. -#}
+    <input class="fleet-menu-state" type="radio" name="fleet-menu" id="fleet-menu-none" checked>
     <div class="fleet-links">
       {%- for link in ns.primary -%}
-        {{ _fleet_item(link, menus.get(link.url) or menus.get((link.url or '').rstrip('/'))) }}
+        {{ _fleet_item(link, menus.get(link.url) or menus.get((link.url or '').rstrip('/')),
+                       'fm-p-' ~ loop.index) }}
       {%- endfor -%}
     </div>
     {%- endif -%}
   {%- elif slot == 'more' -%}
     {%- if ns.more -%}
-    <details class="fleet-sub fleet-more">
-      <summary>{{ more_label }}<span class="fleet-caret" aria-hidden="true"></span></summary>
+    <div class="fleet-sub fleet-more">
+      <input class="fleet-menu-state" type="radio" name="fleet-menu" id="fm-more">
+      <label class="fleet-sub-summary" for="fm-more">{{ more_label }}<span class="fleet-caret" aria-hidden="true"></span></label>
+      <label class="fleet-sub-scrim" for="fleet-menu-none" aria-hidden="true"></label>
       <div class="fleet-sub-panel">
         {%- for link in ns.more -%}
           <a href="{{ link.url }}">{{ link.label }}<span aria-hidden="true"> &rarr;</span></a>
         {%- endfor -%}
       </div>
-    </details>
+    </div>
     {%- endif -%}
   {%- endif -%}
 {% endmacro %}
 
 
 {#
-  One companion: a pill when it has nothing under it, a disclosure when it does.
+  One companion: a pill when it has nothing under it, a menu when it does.
 
-  A <details> and not a hover menu, on every width. Hover has no keyboard or
-  touch equivalent without script, and the whole header is deliberately
-  scriptless — the same argument the hamburger already makes one file over.
+  A RADIO AND A SCRIM, not a <details>. The first version used <details>, which
+  has exactly one flaw and it is the one people notice: nothing closes it except
+  clicking the summary again. Click a menu open, click somewhere else on the
+  page, and it stays there — which is not how any other menu behaves and reads
+  as broken rather than as a disclosure.
+
+  Neither is fixable in CSS on a <details>, because `open` is state a stylesheet
+  cannot clear. A radio group can be cleared, by a label pointing at a different
+  radio in the same group — so the scrim is a full-page <label> for the "none"
+  radio, and clicking it closes whatever is open. Still no script, which is the
+  constraint that started all of this.
+
+  The scrim sits BELOW the header in the stacking order, so the other menu
+  controls stay clickable while one is open: switching menus is one click, not
+  two. The one thing this cannot do is close a menu by clicking its own label —
+  a radio is already checked at that point — and Escape does not close it
+  either. Both need script; neither is what anybody complained about.
 #}
-{% macro _fleet_item(link, groups) %}
+{% macro _fleet_item(link, groups, menu_id) %}
   {%- if groups -%}
-    <details class="fleet-sub">
-      <summary>{{ link.label }}<span class="fleet-caret" aria-hidden="true"></span></summary>
+    <div class="fleet-sub">
+      <input class="fleet-menu-state" type="radio" name="fleet-menu" id="{{ menu_id }}">
+      <label class="fleet-sub-summary" for="{{ menu_id }}">{{ link.label }}<span class="fleet-caret" aria-hidden="true"></span></label>
+      <label class="fleet-sub-scrim" for="fleet-menu-none" aria-hidden="true"></label>
       <div class="fleet-sub-panel">
         <a class="fleet-sub-home" href="{{ link.url }}">{{ link.label }} home<span aria-hidden="true"> &rarr;</span></a>
         {%- for group in groups -%}
           <a href="{{ group.url }}">{{ group.name }}</a>
         {%- endfor -%}
       </div>
-    </details>
+    </div>
   {%- else -%}
     <a class="fleet-link" href="{{ link.url }}">{{ link.label }}<span aria-hidden="true"> &rarr;</span></a>
   {%- endif -%}

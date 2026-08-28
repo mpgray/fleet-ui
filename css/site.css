@@ -232,7 +232,13 @@ summary:focus-visible,
   padding: var(--space-2) var(--space-5);
 }
 .site-brand { text-decoration: none; display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
-.site-brand-text { display: flex; flex-direction: column; min-width: 0; }
+/* Tagline first, name second — `column-reverse` rather than reordering the
+   markup, because the heading has to come before its subtitle in the document
+   for a screen reader and for the outline. The site's name is the larger of the
+   two and reads as the anchor wherever it sits; the tagline above it is the
+   line that says what the place is before you have finished reading the name,
+   which is the order a stranger needs them in. */
+.site-brand-text { display: flex; flex-direction: column-reverse; min-width: 0; }
 /* A circle that LETTERBOXES rather than crops. `border-radius: 50%` on an
    auto-width image is an ellipse, and `object-fit: cover` inside a square box
    eats the ends of a wordmark — both of which are how a rounded logo ends up
@@ -292,9 +298,7 @@ summary:focus-visible,
   align-items: center;
   row-gap: var(--space-1);
   column-gap: var(--space-1);
-  padding-top: var(--space-2);
-  margin-top: var(--space-1);
-  border-top: var(--rule) solid var(--border);
+  padding-top: var(--space-1);
 }
 .site-nav a {
   color: var(--header-text);
@@ -467,9 +471,14 @@ summary:focus-visible,
 
   /* A companion's submenu is a floating panel at desktop width and an inline
      block here. Absolute positioning inside a header that grows to hold its
-     own menu would put the panel over the page it is supposed to sit above. */
+     own menu would put the panel over the page it is supposed to sit above.
+
+     The scrim is off entirely: the menu is inline in a panel the hamburger
+     already opened, so a full-page overlay would only get in the way of the
+     rest of that panel. */
   .fleet-sub { width: 100%; }
-  .fleet-sub > summary {
+  .fleet-sub-summary {
+    display: flex;
     border: none;
     border-top: var(--rule) solid var(--border);
     border-radius: 0;
@@ -477,8 +486,9 @@ summary:focus-visible,
     font-size: var(--step-0);
     justify-content: space-between;
   }
-  .fleet-sub[open] > summary { background: none; color: var(--accent); }
-  .fleet-sub-panel {
+  .fleet-menu-state:checked ~ .fleet-sub-summary { background: none; color: var(--accent); }
+  .fleet-menu-state:checked ~ .fleet-sub-scrim { display: none; }
+  .fleet-menu-state:checked ~ .fleet-sub-panel {
     position: static;
     min-width: 0;
     border: none;
@@ -509,14 +519,30 @@ summary:focus-visible,
 }
 
 /* ── Companion submenus and "More" (macros/fleet.html) ──────────────────
-   A <details>, not a hover menu, at every width. Hover has no keyboard and no
-   touch equivalent without script, and this header is scriptless on purpose —
-   the same argument the hamburger makes one section up. The cost is a click to
-   open, which is why the panel's first row is a link to the companion itself:
-   turning a pill into a menu must not lose the destination the pill had. */
+   A radio group and a full-page scrim, not a <details>.
+
+   <details> had one flaw and it is the one people notice: nothing closes it
+   except clicking the summary again, so clicking anywhere else on the page
+   leaves the menu hanging open. `open` is state CSS cannot clear, so it was not
+   fixable where it stood. A radio CAN be cleared — by a label pointing at
+   another radio in the same group — which is what .fleet-sub-scrim is.
+
+   The scrim's z-index is the load-bearing number. It sits BELOW .site-header
+   (30) and above the page, so an open menu is dismissed by a click anywhere in
+   the document except the header itself — and the other menu controls, which
+   live in the header, stay clickable, so switching menus is one click. Raise
+   this above 30 and switching silently becomes two. */
+.fleet-menu-state {
+  /* Clipped, never display:none: that would take it out of the tab order and
+     make the menu keyboard-unreachable. Same reasoning as .nav-checkbox. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
 .fleet-sub { position: relative; }
-.fleet-sub > summary {
-  list-style: none;
+.fleet-sub-summary {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -528,11 +554,16 @@ summary:focus-visible,
   border-radius: var(--r-pill);
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.fleet-sub > summary::-webkit-details-marker { display: none; }
-.fleet-sub > summary::marker { content: ''; }
-.fleet-sub > summary:hover,
-.fleet-sub[open] > summary { background: var(--accent); color: var(--accent-contrast); }
-.fleet-sub > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fleet-sub-summary:hover,
+.fleet-menu-state:checked ~ .fleet-sub-summary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+/* The radio is invisible, so its focus ring is drawn on the label. */
+.fleet-menu-state:focus-visible ~ .fleet-sub-summary {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 /* Drawn in borders rather than pulled from the icon sprite: this file is
    included by consumers that do not all inline the sprite, and a chevron that
@@ -545,15 +576,27 @@ summary:focus-visible,
   transform: rotate(45deg) translate(-0.1em, -0.1em);
   transition: transform var(--dur) var(--ease);
 }
-.fleet-sub[open] > summary .fleet-caret { transform: rotate(-135deg) translate(-0.15em, -0.15em); }
+.fleet-menu-state:checked ~ .fleet-sub-summary .fleet-caret {
+  transform: rotate(-135deg) translate(-0.15em, -0.15em);
+}
 
-.fleet-sub-panel {
+.fleet-sub-scrim { display: none; }
+.fleet-menu-state:checked ~ .fleet-sub-scrim {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 29;
+  cursor: default;
+}
+
+.fleet-sub-panel { display: none; }
+.fleet-menu-state:checked ~ .fleet-sub-panel {
+  display: flex;
   position: absolute;
   top: calc(100% + var(--space-2));
   left: 0;
   z-index: 40;
   min-width: 12rem;
-  display: flex;
   flex-direction: column;
   padding: var(--space-1);
   background: var(--header-bg);
@@ -571,7 +614,11 @@ summary:focus-visible,
 }
 .fleet-sub-panel a:hover { background: var(--accent); color: var(--accent-contrast); }
 .fleet-sub-home { color: var(--accent); }
-.fleet-sub-panel .fleet-sub-home + a { margin-top: var(--space-1); border-top: var(--rule) solid var(--border); padding-top: var(--space-3); }
+.fleet-sub-panel .fleet-sub-home + a {
+  margin-top: var(--space-1);
+  border-top: var(--rule) solid var(--border);
+  padding-top: var(--space-3);
+}
 
 /* "More" is a row-two control sitting among the site's own links, so it is
    outlined like a cross-site link — it leads off this hostname and should not
@@ -579,7 +626,7 @@ summary:focus-visible,
 .fleet-more { margin-left: var(--space-2); }
 /* Anchored right: "More" is the last control on a centred row, so a panel
    opening leftward is the one that stays on screen. */
-.fleet-more > .fleet-sub-panel { left: auto; right: 0; }
+.fleet-more .fleet-menu-state:checked ~ .fleet-sub-panel { left: auto; right: 0; }
 
 /* ── Hero ───────────────────────────────────────────────────────────────
    The image sits beside the headline, not above it. Full-bleed at 18/8 it was
@@ -746,6 +793,13 @@ summary:focus-visible,
   letter-spacing: var(--track-eyebrow);
   color: var(--muted);
   margin: 0 0 var(--space-2);
+}
+/* A second block in the same rail. It needs air above it and a rule to say it
+   is a different list, or the two read as one list with a word in the middle. */
+.aside-heading-second {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--rule) solid var(--border);
 }
 .aside-list { list-style: none; margin: 0; padding: 0; }
 .aside-list li + li { border-top: var(--rule) solid var(--border); }
@@ -1130,13 +1184,14 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
 }
 .newsletter-form { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 .newsletter-form .input { min-width: 14rem; }
-/* In a footer column the label sits above and the field and button share a
-   line. min-width on .input beats flex-wrap in a 1.2fr column, so the row gets
-   to shrink the field instead of dropping the button onto its own line. */
-.footer-col .newsletter-form { flex-direction: column; align-items: stretch; }
-.newsletter-row { display: flex; gap: var(--space-2); align-items: center; }
-.newsletter-row .input { min-width: 0; flex: 1; }
-.footer-col nav { display: flex; flex-direction: column; gap: var(--space-2); }
+/* WRAPS, and that is the whole point of it. A flex item's default
+   `min-width: auto` means the button never shrinks below its own text, so a row
+   that cannot wrap pushes the button past the edge of a narrow footer rather
+   than reflowing — which is exactly what it did. The field has a flex-basis it
+   can fall below and the button drops underneath instead. */
+.newsletter-row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.newsletter-row .input { flex: 1 1 9rem; min-width: 0; }
+.newsletter-row .btn { flex-shrink: 0; }
 .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
 /* Off-screen to the eye, present to a screen reader. Distinct from .hp-field,
@@ -1182,56 +1237,50 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
    when the unit loads — the CLS problem .ad-slot exists to prevent. */
 .ad-slot-below_hero, .ad-slot-in_article { max-width: var(--column); min-height: 280px; }
 
-/* ── Footer ─────────────────────────────────────────────────────────── */
+/* ── Footer ───────────────────────────────────────────────────────────
+   ONE row that wraps, not a three-column grid.
+
+   The grid version was a regression and this is the correction. It took more
+   vertical room than the flex row it replaced, spread three short columns
+   across the full width so the space between them read as emptiness rather
+   than as structure, and put a hairline above the copyright that cut a small
+   block in half for no reason. Column headings over two links each is the
+   shape of a footer with thirty links in it, and this one has five.
+
+   The subscribe button also fell off the page. The row holding the field and
+   the button did not wrap, and a flex item's default `min-width: auto` means a
+   button never shrinks below its own text — so once the column was narrower
+   than field-plus-button, the button went past the edge. It wraps now, which
+   is the fix that holds at every width rather than at the ones tested. */
 .site-footer {
   border-top: var(--rule) solid var(--border);
-  margin-top: var(--space-8);
+  margin-top: var(--space-7);
   background: var(--header-bg);
 }
-/* Three columns that say what they are, not one row with three unrelated
-   things in it. The old footer put a preview image, a sentence about AI, an
-   email field and a link list on one `space-between` line at `align-items:
-   center` — so the sentence and the form were vertically centred against a
-   7.8rem image, the gaps between the four were whatever was left over, and at
-   the wrap point the order rearranged itself. Nothing in it was grouped,
-   which is why it read as dead space rather than as a footer.
-
-   The © line moves out to its own row underneath. It is the one piece that is
-   not navigation and does not want a column heading over it. */
 .footer-inner {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr);
-  gap: var(--space-5) var(--space-6);
-  align-items: start;
-  padding: var(--space-6) var(--space-5) var(--space-5);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+  padding: var(--space-4) var(--space-5);
   font-size: var(--step--1);
   color: var(--muted);
 }
-.footer-col { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
-.footer-heading {
-  font-family: var(--font-heading);
-  font-size: var(--step--2);
-  text-transform: uppercase;
-  letter-spacing: var(--track-eyebrow);
-  color: var(--muted);
-  margin: 0;
-}
-.footer-brand { display: flex; align-items: center; gap: var(--space-3); }
-/* Was 7.8rem, which is a hero, not a mark. */
-.footer-preview-image { height: 3.4rem; width: auto; flex-shrink: 0; border-radius: var(--r-1); }
-.footer-col a { color: var(--muted); text-decoration: none; }
-.footer-col a:hover { color: var(--accent); }
+/* The brand end of the row takes the slack, so the links and the form sit
+   against the right edge instead of floating in the middle of it. */
+.footer-brand { display: flex; align-items: center; gap: var(--space-3); margin-right: auto; min-width: 0; }
+.footer-preview-image { height: 2.2rem; width: auto; flex-shrink: 0; border-radius: var(--r-1); }
+.footer-inner nav { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+.footer-inner a { color: var(--muted); text-decoration: none; }
+.footer-inner a:hover { color: var(--accent); }
+/* No rule above it. It is the same block, and a hairline across a footer four
+   lines tall divides nothing. */
 .footer-bottom {
-  border-top: var(--rule) solid var(--border);
-  padding: var(--space-3) var(--space-5) var(--space-5);
+  padding: 0 var(--space-5) var(--space-4);
   font-size: var(--step--2);
   color: var(--muted);
 }
-.footer-note { color: var(--muted); font-size: var(--step--1); max-width: 60ch; }
-
-@media (max-width: 720px) {
-  .footer-inner { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
-}
+.footer-note { color: var(--muted); font-size: var(--step--1); max-width: 60ch; margin: 0; }
 
 /* ── Motion ─────────────────────────────────────────────────────────────
    Last, so it wins on specificity ties. Covers the presets too: `terminal`
