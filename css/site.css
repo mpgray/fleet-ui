@@ -595,6 +595,77 @@ summary:focus-visible,
    now is the accent rule at its foot, which is the header's band and the
    article's spine appearing a third time. */
 .hero { margin: var(--space-5) 0 var(--space-6); }
+
+/* ── The site's own sentence, and the companion tools ───────────────────
+   Two things a home page owes a reader who arrived from a search result and
+   has never seen the name: what this site is, and what it can do for them
+   right now. Neither was on the page. The first is one line under the hero;
+   the second is the toolbox, which existed and was reachable only by noticing
+   a link in the header and guessing what was behind it.
+
+   The tools sit ABOVE the article grid because a reader who wants a number
+   wants it now, and below the hero because the lead article is still the
+   thing this site is for. */
+.site-intro {
+  max-width: var(--measure);
+  margin: 0 0 var(--space-6);
+  color: var(--muted);
+  font-size: var(--step-1);
+  line-height: var(--lh-snug);
+}
+.tools-band { margin: 0 0 var(--space-7); }
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: var(--space-4);
+}
+
+/* One or two tools do not make a row; they make a note beside the lead. Above
+   900px the hero keeps the width it had and the tools take a rail; below it
+   they fall under, which is the same thing the home rail already does. */
+.hero-with-tools { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; gap: var(--space-5); align-items: start; }
+.hero-tools { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-5); }
+@media (max-width: 900px) {
+  .hero-with-tools { grid-template-columns: minmax(0, 1fr); }
+  .hero-tools { padding-top: 0; }
+}
+
+/* Outlined and arrowed, like a companion link in the header — because that is
+   what it is. Dressing it as an article card would sell a guide and deliver a
+   form, and the tools are worth more than the click that comes back. */
+.tool-card {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-4);
+  text-decoration: none;
+  color: var(--text);
+  border: var(--rule) solid var(--border);
+  border-radius: var(--r-2);
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+.tool-card:hover { border-color: var(--accent); background: var(--surface); }
+.tool-card-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--r-1);
+  background: var(--surface);
+  color: var(--accent);
+}
+.tool-card:hover .tool-card-icon { background: var(--accent); color: var(--accent-contrast); }
+.tool-card-body { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+/* Margin reset because this is a <span> on the blog, where the tools are a
+   secondary block, and an <h2> on the toolbox index, where they are the page.
+   Same component, same class, and the element is the consumer's call. */
+.tool-card-title { margin: 0; font-family: var(--font-heading); font-size: var(--step-1); line-height: var(--lh-snug); }
+.tool-card-answer { color: var(--muted); font-size: var(--step--1); }
+.tool-card-answer strong { color: var(--accent); font-weight: 600; }
+.tool-card-arrow { color: var(--accent); }
+.tool-card-summary { color: var(--muted); font-size: var(--step--1); line-height: var(--lh-snug); }
 .hero-link {
   display: grid;
   gap: var(--space-4);
@@ -1059,6 +1130,13 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
 }
 .newsletter-form { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 .newsletter-form .input { min-width: 14rem; }
+/* In a footer column the label sits above and the field and button share a
+   line. min-width on .input beats flex-wrap in a 1.2fr column, so the row gets
+   to shrink the field instead of dropping the button onto its own line. */
+.footer-col .newsletter-form { flex-direction: column; align-items: stretch; }
+.newsletter-row { display: flex; gap: var(--space-2); align-items: center; }
+.newsletter-row .input { min-width: 0; flex: 1; }
+.footer-col nav { display: flex; flex-direction: column; gap: var(--space-2); }
 .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
 /* Off-screen to the eye, present to a screen reader. Distinct from .hp-field,
