@@ -66,6 +66,12 @@
   --r-1: calc(var(--radius) * 0.5);
   --r-2: var(--radius);
   --r-pill: 999px;
+  /* Not derived from --radius, and deliberately so: --r-pill and --r-circle
+     are SHAPES, not degrees of rounding. A pill is a pill at every preset, and
+     an avatar is a circle or it is not one. A preset that wants square corners
+     everywhere overrides these two by name, which is a visible line in a diff
+     — the thing scaling them off --radius would have hidden. */
+  --r-circle: 50%;
 
   /* Rules. --rule-accent is the band under the header: the site's colour, at
      the top of every page, tying the header to the article spine below it.
@@ -227,7 +233,24 @@ summary:focus-visible,
 }
 .site-brand { text-decoration: none; display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
 .site-brand-text { display: flex; flex-direction: column; min-width: 0; }
-.site-logo { height: 2.4rem; width: auto; border-radius: var(--r-1); }
+/* A circle that LETTERBOXES rather than crops. `border-radius: 50%` on an
+   auto-width image is an ellipse, and `object-fit: cover` inside a square box
+   eats the ends of a wordmark — both of which are how a rounded logo ends up
+   cutting off the thing it exists to show. A fixed square, `contain`, and a
+   surface fill behind it gives the round shape with nothing lost.
+
+   `terminal` overrides this back to 0 in its own preset file. That preset's
+   whole argument is that nothing on the page is rounded, and a hard 50% here
+   would overrule it. */
+.site-logo {
+  height: 2.6rem;
+  width: 2.6rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  background: var(--surface);
+  padding: 2px;
+  border-radius: var(--r-circle);
+}
 .site-title {
   font-family: var(--font-heading);
   font-size: var(--step-1);
@@ -237,7 +260,42 @@ summary:focus-visible,
   letter-spacing: 0;
 }
 .site-tagline { font-size: var(--step--1); color: var(--muted); line-height: var(--lh-snug); }
-.site-nav { margin-left: auto; display: flex; flex-wrap: wrap; row-gap: var(--space-1); column-gap: var(--space-1); align-items: center; }
+
+/* Row one, right: the companion sites and the search form, on one line with
+   the brand. The companions sit before the search rather than after the
+   categories because they are the other half of the product and the old header
+   ranked them last — after every category and every static page, at the end of
+   a wrapping row, which is where a link goes to be ignored. */
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.fleet-links { display: flex; align-items: center; gap: var(--space-2); }
+/* Old markup, kept working until every consumer moves: the search form as a
+   direct child of .header-inner rather than inside .header-actions. `.site-nav`
+   used to carry the `margin-left: auto` that pushed everything right, and it is
+   a full-width second row now, so without this the form lands against the
+   brand on any repo that has taken the pin bump but not the template. */
+.header-inner > .search-form { margin-left: auto; }
+
+/* Row two: the site's own navigation, centred, on its own band. Full-width via
+   flex-basis rather than a grid row, so it participates in the same wrap the
+   header has always used and a consumer that renders no nav costs nothing. */
+.site-nav {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  row-gap: var(--space-1);
+  column-gap: var(--space-1);
+  padding-top: var(--space-2);
+  margin-top: var(--space-1);
+  border-top: var(--rule) solid var(--border);
+}
 .site-nav a {
   color: var(--header-text);
   text-decoration: none;
@@ -251,8 +309,25 @@ summary:focus-visible,
   background: var(--accent);
 }
 .search-form { display: flex; align-items: center; gap: var(--space-1); }
-.search-form .input { padding: var(--space-1) var(--space-3); font-size: var(--step--1); width: 10rem; }
+.search-form .input {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--step--1);
+  width: 10rem;
+  transition: width var(--dur) var(--ease);
+}
 .search-form .btn { padding: var(--space-1) var(--space-3); }
+
+/* The gap between "row one still fits" and "the hamburger takes over".
+   Brand plus tagline plus three companion pills plus a 10rem field is around
+   780px of content on a site with a long name, so a header that collapses at
+   820px has a couple of hundred pixels in which row one wraps instead — which
+   looks broken rather than collapsed, and only on the widths a laptop actually
+   uses. The field shrinks to its button and opens again on focus. CSS only:
+   :focus-within is the whole mechanism. */
+@media (min-width: 821px) and (max-width: 1000px) {
+  .search-form .input { width: 3rem; }
+  .search-form:focus-within .input { width: 12rem; }
+}
 
 /* ── The hamburger ──────────────────────────────────────────────────────
    A checkbox, not a script. The previous version toggled a class from
@@ -316,6 +391,14 @@ summary:focus-visible,
   .site-tagline { display: none; }
 
   .nav-toggle { display: inline-flex; }
+  /* `.search-form` is listed alongside the wrapper, and both are revealed
+     below, because a pin bump lands in four repos and they do not all update
+     their base.html in the same hour. A consumer still on the old markup —
+     search form as a bare sibling of the checkbox — collapses and reopens
+     correctly; one on the new markup gets the ordered panel. Neither ships a
+     header with a search field stuck open at 375px, which is what leaving this
+     selector alone would have done to whoever bumped last. */
+  .header-actions,
   .search-form,
   .site-nav { display: none; }
 
@@ -323,39 +406,85 @@ summary:focus-visible,
      stacked rows with real tap targets — what a mobile menu looks like
      everywhere else. The header grows to hold it rather than the panel
      overlaying the page: an overlay needs a stacking context and a scroll
-     lock to behave, and neither is worth it for a list of six links. */
+     lock to behave, and neither is worth it for a list of six links.
+
+     Reading order in the panel is search → companions → categories → More,
+     which is the same order as the two desktop rows read left-to-right and
+     top-to-bottom. A menu that reorders itself at a breakpoint is a second
+     information architecture to learn, for no gain. */
+  .nav-checkbox:checked ~ .header-actions,
   .nav-checkbox:checked ~ .search-form,
   .nav-checkbox:checked ~ .site-nav {
     display: flex;
     flex-basis: 100%;
     margin-left: 0;
   }
+  .nav-checkbox:checked ~ .header-actions,
   .nav-checkbox:checked ~ .search-form {
     order: 1;
     padding-top: var(--space-2);
   }
+  .nav-checkbox:checked ~ .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+  .nav-checkbox:checked ~ .header-actions .search-form { order: 1; display: flex; }
+  .nav-checkbox:checked ~ .header-actions .search-form .input,
   .nav-checkbox:checked ~ .search-form .input { flex: 1; width: auto; }
+  .nav-checkbox:checked ~ .header-actions .fleet-links {
+    order: 2;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    margin-top: var(--space-2);
+  }
 
   .nav-checkbox:checked ~ .site-nav {
     order: 2;
     flex-direction: column;
     align-items: stretch;
+    justify-content: flex-start;
     row-gap: 0;
     padding: var(--space-2) 0 var(--space-1);
-    border-top: var(--rule) solid var(--border);
     margin-top: var(--space-2);
   }
-  .nav-checkbox:checked ~ .site-nav a {
+  .nav-checkbox:checked ~ .site-nav > a {
     padding: var(--space-3) var(--space-2);
     font-size: var(--step-0);
     border-radius: var(--r-2);
   }
   /* The cross-site links are outlined pills at desktop width; as full-width
      rows that outline reads as a text field, so it becomes a rule instead. */
-  .nav-checkbox:checked ~ .site-nav .fleet-link {
+  .nav-checkbox:checked ~ .site-nav .fleet-link,
+  .nav-checkbox:checked ~ .header-actions .fleet-link {
     border: none;
     border-top: var(--rule) solid var(--border);
     border-radius: 0;
+    padding: var(--space-3) var(--space-2);
+    font-size: var(--step-0);
+  }
+
+  /* A companion's submenu is a floating panel at desktop width and an inline
+     block here. Absolute positioning inside a header that grows to hold its
+     own menu would put the panel over the page it is supposed to sit above. */
+  .fleet-sub { width: 100%; }
+  .fleet-sub > summary {
+    border: none;
+    border-top: var(--rule) solid var(--border);
+    border-radius: 0;
+    padding: var(--space-3) var(--space-2);
+    font-size: var(--step-0);
+    justify-content: space-between;
+  }
+  .fleet-sub[open] > summary { background: none; color: var(--accent); }
+  .fleet-sub-panel {
+    position: static;
+    min-width: 0;
+    border: none;
+    box-shadow: none;
+    background: none;
+    padding: 0 0 var(--space-2) var(--space-4);
   }
 }
 
@@ -363,14 +492,94 @@ summary:focus-visible,
    A link to a sibling site leaves this hostname, so it is drawn differently
    from the site's own nav. Outlined rather than louder: it should read as a
    way across, not as the most important thing in the header. */
-.site-nav .fleet-link {
-  border: var(--rule) solid var(--accent);
+.site-nav .fleet-link,
+.header-actions .fleet-link {
   color: var(--accent);
+  text-decoration: none;
+  font-size: var(--step--1);
+  padding: var(--space-1) var(--space-3);
+  border: var(--rule) solid var(--accent);
+  border-radius: var(--r-pill);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.site-nav .fleet-link:hover {
+.site-nav .fleet-link:hover,
+.header-actions .fleet-link:hover {
   background: var(--accent);
   color: var(--accent-contrast);
 }
+
+/* ── Companion submenus and "More" (macros/fleet.html) ──────────────────
+   A <details>, not a hover menu, at every width. Hover has no keyboard and no
+   touch equivalent without script, and this header is scriptless on purpose —
+   the same argument the hamburger makes one section up. The cost is a click to
+   open, which is why the panel's first row is a link to the companion itself:
+   turning a pill into a menu must not lose the destination the pill had. */
+.fleet-sub { position: relative; }
+.fleet-sub > summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--step--1);
+  color: var(--accent);
+  border: var(--rule) solid var(--accent);
+  border-radius: var(--r-pill);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.fleet-sub > summary::-webkit-details-marker { display: none; }
+.fleet-sub > summary::marker { content: ''; }
+.fleet-sub > summary:hover,
+.fleet-sub[open] > summary { background: var(--accent); color: var(--accent-contrast); }
+.fleet-sub > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Drawn in borders rather than pulled from the icon sprite: this file is
+   included by consumers that do not all inline the sprite, and a chevron that
+   renders as an empty box on one of them is worse than no chevron. */
+.fleet-caret {
+  width: 0.4em;
+  height: 0.4em;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translate(-0.1em, -0.1em);
+  transition: transform var(--dur) var(--ease);
+}
+.fleet-sub[open] > summary .fleet-caret { transform: rotate(-135deg) translate(-0.15em, -0.15em); }
+
+.fleet-sub-panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 40;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-1);
+  background: var(--header-bg);
+  border: var(--rule) solid var(--border);
+  border-radius: var(--r-2);
+  box-shadow: var(--elev-1);
+}
+.fleet-sub-panel a {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-1);
+  color: var(--header-text);
+  text-decoration: none;
+  font-size: var(--step--1);
+  white-space: nowrap;
+}
+.fleet-sub-panel a:hover { background: var(--accent); color: var(--accent-contrast); }
+.fleet-sub-home { color: var(--accent); }
+.fleet-sub-panel .fleet-sub-home + a { margin-top: var(--space-1); border-top: var(--rule) solid var(--border); padding-top: var(--space-3); }
+
+/* "More" is a row-two control sitting among the site's own links, so it is
+   outlined like a cross-site link — it leads off this hostname and should not
+   be dressed as a category. */
+.fleet-more { margin-left: var(--space-2); }
+/* Anchored right: "More" is the last control on a centred row, so a panel
+   opening leftward is the one that stays on screen. */
+.fleet-more > .fleet-sub-panel { left: auto; right: 0; }
 
 /* ── Hero ───────────────────────────────────────────────────────────────
    The image sits beside the headline, not above it. Full-bleed at 18/8 it was
@@ -449,10 +658,14 @@ summary:focus-visible,
 
 /* The rail carries the spine too, so the page has one rule language: a thing
    bounded by an accent rule is a column of reading. */
+/* padding-top, not a margin on .aside-heading: the rail is sticky, so the gap
+   has to belong to the sticky box or it scrolls away with the heading and the
+   rule starts flush against the top of the viewport again. */
 .home-aside {
   position: sticky;
   top: var(--space-8);
   padding-left: var(--space-4);
+  padding-top: var(--space-5);
   border-left: var(--rule-spine) solid var(--accent);
 }
 .aside-heading {
@@ -897,17 +1110,50 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
   margin-top: var(--space-8);
   background: var(--header-bg);
 }
+/* Three columns that say what they are, not one row with three unrelated
+   things in it. The old footer put a preview image, a sentence about AI, an
+   email field and a link list on one `space-between` line at `align-items:
+   center` — so the sentence and the form were vertically centred against a
+   7.8rem image, the gaps between the four were whatever was left over, and at
+   the wrap point the order rearranged itself. Nothing in it was grouped,
+   which is why it read as dead space rather than as a footer.
+
+   The © line moves out to its own row underneath. It is the one piece that is
+   not navigation and does not want a column heading over it. */
 .footer-inner {
-  display: flex; flex-wrap: wrap; gap: var(--space-4);
-  justify-content: space-between; align-items: center;
-  padding: var(--space-6) var(--space-5);
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: var(--space-5) var(--space-6);
+  align-items: start;
+  padding: var(--space-6) var(--space-5) var(--space-5);
   font-size: var(--step--1);
   color: var(--muted);
 }
-.footer-preview-image { height: 7.8rem; width: auto; flex-shrink: 0; border-radius: var(--r-1); }
-.footer-inner a { color: var(--muted); margin-right: var(--space-4); }
-.footer-inner a:hover { color: var(--accent); }
+.footer-col { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.footer-heading {
+  font-family: var(--font-heading);
+  font-size: var(--step--2);
+  text-transform: uppercase;
+  letter-spacing: var(--track-eyebrow);
+  color: var(--muted);
+  margin: 0;
+}
+.footer-brand { display: flex; align-items: center; gap: var(--space-3); }
+/* Was 7.8rem, which is a hero, not a mark. */
+.footer-preview-image { height: 3.4rem; width: auto; flex-shrink: 0; border-radius: var(--r-1); }
+.footer-col a { color: var(--muted); text-decoration: none; }
+.footer-col a:hover { color: var(--accent); }
+.footer-bottom {
+  border-top: var(--rule) solid var(--border);
+  padding: var(--space-3) var(--space-5) var(--space-5);
+  font-size: var(--step--2);
+  color: var(--muted);
+}
 .footer-note { color: var(--muted); font-size: var(--step--1); max-width: 60ch; }
+
+@media (max-width: 720px) {
+  .footer-inner { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
+}
 
 /* ── Motion ─────────────────────────────────────────────────────────────
    Last, so it wins on specificity ties. Covers the presets too: `terminal`

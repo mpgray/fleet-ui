@@ -1,17 +1,24 @@
 {#
-  The collapsing header.
+  The collapsing header. Two rows at desktop width, one panel at mobile.
 
   Usage, inside .header-inner, in this order:
 
       <a class="site-brand"> … </a>
       {{ nav_toggle() }}
-      <form class="search-form"> … </form>
-      <nav class="site-nav" id="site-nav"> … </nav>
+      <div class="header-actions">              ← row one, right
+        {{ fleet_nav_split(links, here, 'primary', menus) }}
+        <form class="search-form"> … </form>
+      </div>
+      {% call nav_row() %}                      ← row two, centred
+        … categories, pages …
+        {{ fleet_nav_split(links, here, 'more') }}
+      {% endcall %}
 
-  **The order is load-bearing.** The checkbox reveals the search form and the
-  nav through the sibling combinator (`~`), which only reaches elements that
-  come after it inside the same parent. Move it after the nav and the menu
-  silently stops opening.
+  **The order is load-bearing.** The checkbox reveals the actions and the nav
+  through the sibling combinator (`~`), which only reaches elements that come
+  after it inside the same parent. Move it after the nav and the menu silently
+  stops opening — and note that the search form is now INSIDE .header-actions,
+  so the reveal targets the wrapper, not the form.
 
   No JavaScript. The first version of this toggled a class from a script and
   shipped a hamburger that rendered and then did nothing — a control that needs
@@ -34,4 +41,21 @@
     <span class="nav-toggle-bars" aria-hidden="true"></span>
     <span class="visually-hidden">{{ label }}</span>
   </label>
+{% endmacro %}
+
+
+{#
+  Row two: the site's own navigation, centred, on its own band.
+
+  A call block rather than a plain macro so it can see whether it has anything
+  to render. Not every consumer of this repo has categories — ai-help has none
+  at all — and an empty <nav> still draws the hairline above it, which reads as
+  a rule under the header for no reason on the one site nobody opens after a
+  pin bump. Emitting nothing is the correct answer to having nothing.
+#}
+{% macro nav_row(label='Main', id='site-nav') %}
+  {%- set body = caller() -%}
+  {%- if body | trim -%}
+  <nav class="site-nav" id="{{ id }}" aria-label="{{ label }}">{{ body }}</nav>
+  {%- endif -%}
 {% endmacro %}

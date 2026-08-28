@@ -29,3 +29,11 @@
 /* Mono runs wide, so a 68ch measure is a physically longer line than it is in
    a proportional face — pull it in rather than let the eye lose the return. */
 :root { --measure: 62ch; }
+
+/* The two shapes that are not degrees of rounding, and so are not reached by
+   --radius: 0. site.css draws the logo as a circle and the nav links as pills
+   deliberately — they are shapes, not corner softening — which is right on
+   nine presets and wrong on the one whose entire argument is that this is a
+   terminal. Overridden by name, here, where the argument lives. */
+:root { --r-pill: 0px; --r-circle: 0px; }
+.site-logo { padding: 0; }

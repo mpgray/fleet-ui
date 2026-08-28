@@ -14,7 +14,9 @@ css/site.css              structural styles — scales, layout, header, cards, a
 css/themes/*.css          one file per theme preset; each defines the token block
 css/tokens-bootstrap.css  the scales as --bs-* vars, for the Bootstrap-based
                           admin panel and writers' portal (no colours, opt-in)
-templates/macros/         icons.html — icon(name) -> <svg><use href="#icon-name">
+templates/macros/         icons.html  — icon(name) -> <svg><use href="#icon-name">
+                          header.html — nav_toggle(), nav_row() (the two rows)
+                          fleet.html  — cross-links, split across those rows
 templates/partials/       icon_sprite.html — self-hosted inline SVG sprite
 scripts/check_contrast.py CI: every preset clears WCAG AA. Runs standalone.
 ```
@@ -81,7 +83,8 @@ not brand:
 ```
 --step--2 … --step-4        type, a 1.2 scale off a 17px body
 --space-1 … --space-8       4px base
---r-1 --r-2 --r-pill        MULTIPLIED from --radius, never added to
+--r-1 --r-2                 MULTIPLIED from --radius, never added to
+--r-pill --r-circle         shapes, NOT degrees of rounding — see below
 --rule --rule-accent --rule-spine
 --shadow-color --elev-1
 --measure --container --column
@@ -98,6 +101,12 @@ Two of these are worth knowing about before you touch them:
   nine places, which inverted the token: `terminal` asks for `0` and got
   10px-rounded cards anyway, `valheim` asks for `14px` and got 24px pillows.
   Multiplying respects what the preset asked for at both ends of the range.
+- **`--r-pill` and `--r-circle` do not scale off `--radius`, on purpose.** A
+  pill is a pill and an avatar is a circle at every preset — those are shapes,
+  and deriving them from a corner-softening token means `--radius: 0` silently
+  turns a round logo into a square one nobody asked for. A preset that *does*
+  want that overrides the two by name, which is a line in a diff someone reads.
+  `terminal` is the one that does.
 - **`--shadow-color` is expected to be overridden per preset.** No single value
   is right on both `#faf7f2` and `#060a06`; on a near-black background the
   honest answer is `transparent`, and `--elev-1` carries a border-coloured line
