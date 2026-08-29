@@ -232,13 +232,12 @@ summary:focus-visible,
   padding: var(--space-2) var(--space-5);
 }
 .site-brand { text-decoration: none; display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
-/* Tagline first, name second — `column-reverse` rather than reordering the
-   markup, because the heading has to come before its subtitle in the document
-   for a screen reader and for the outline. The site's name is the larger of the
-   two and reads as the anchor wherever it sits; the tagline above it is the
-   line that says what the place is before you have finished reading the name,
-   which is the order a stranger needs them in. */
-.site-brand-text { display: flex; flex-direction: column-reverse; min-width: 0; }
+/* Name then tagline, the way it always was. A previous version flipped these
+   with column-reverse, on a misreading of "the tagline should be on top" —
+   which was about the line under the hero moving to the top of the PAGE, not
+   about the header brand putting its subtitle above its own name. Putting a
+   subtitle above the thing it is subtitling has no reading that helps. */
+.site-brand-text { display: flex; flex-direction: column; min-width: 0; }
 /* A circle that LETTERBOXES rather than crops. `border-radius: 50%` on an
    auto-width image is an ellipse, and `object-fit: cover` inside a square box
    eats the ends of a wordmark — both of which are how a rounded logo ends up
@@ -321,17 +320,15 @@ summary:focus-visible,
 }
 .search-form .btn { padding: var(--space-1) var(--space-3); }
 
-/* The gap between "row one still fits" and "the hamburger takes over".
-   Brand plus tagline plus three companion pills plus a 10rem field is around
-   780px of content on a site with a long name, so a header that collapses at
-   820px has a couple of hundred pixels in which row one wraps instead — which
-   looks broken rather than collapsed, and only on the widths a laptop actually
-   uses. The field shrinks to its button and opens again on focus. CSS only:
-   :focus-within is the whole mechanism. */
-@media (min-width: 821px) and (max-width: 1000px) {
-  .search-form .input { width: 3rem; }
-  .search-form:focus-within .input { width: 12rem; }
-}
+/* There used to be a rule here shrinking the field to its button between 821px
+   and 1000px, against a wrap I estimated at "around 780px of content" and never
+   measured. Row one is brand, companions and search — the categories moved to
+   row two in the same change — so there is a wide band of empty space to the
+   left of the field at exactly those widths, and it was collapsing a search box
+   to avoid a wrap that does not happen.
+   
+   If row one ever does run out of room, .header-inner wraps, which is a
+   degradation and not a break. */
 
 /* ── The hamburger ──────────────────────────────────────────────────────
    A checkbox, not a script. The previous version toggled a class from
@@ -653,9 +650,14 @@ summary:focus-visible,
    The tools sit ABOVE the article grid because a reader who wants a number
    wants it now, and below the hero because the lead article is still the
    thing this site is for. */
+/* The first line on the page, above the hero. It was below it, which put the
+   sentence explaining the site after the article the site is currently leading
+   with — and, because it fell back to the tagline, repeated a string already in
+   the header two lines further up. It has its own copy now and renders nothing
+   without it. */
 .site-intro {
   max-width: var(--measure);
-  margin: 0 0 var(--space-6);
+  margin: var(--space-5) 0 var(--space-4);
   color: var(--muted);
   font-size: var(--step-1);
   line-height: var(--lh-snug);
@@ -739,7 +741,14 @@ summary:focus-visible,
   border-radius: var(--r-2);
 }
 .hero-text { min-width: 0; }
-.hero-title { font-size: var(--step-4); margin: var(--space-2) 0; }
+/* One step down from the article's own h1.
+
+   --step-4 is the size for the title of the thing you are READING. A hero is a
+   link to something else, sharing a page with a grid of other links, and set at
+   the same size it competes with the article it is advertising and pushes the
+   grid off the screen. .article-title keeps --step-4; this is the one place the
+   two were wrongly equal. */
+.hero-title { font-size: var(--step-3); margin: var(--space-2) 0; }
 .hero-excerpt { color: var(--muted); font-size: var(--step-0); margin: 0; max-width: var(--measure); }
 .hero-link:hover .hero-title { color: var(--accent); }
 .hero-empty {
