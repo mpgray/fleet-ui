@@ -320,17 +320,15 @@ summary:focus-visible,
 }
 .search-form .btn { padding: var(--space-1) var(--space-3); }
 
-/* The gap between "row one still fits" and "the hamburger takes over".
-   Brand plus tagline plus three companion pills plus a 10rem field is around
-   780px of content on a site with a long name, so a header that collapses at
-   820px has a couple of hundred pixels in which row one wraps instead — which
-   looks broken rather than collapsed, and only on the widths a laptop actually
-   uses. The field shrinks to its button and opens again on focus. CSS only:
-   :focus-within is the whole mechanism. */
-@media (min-width: 821px) and (max-width: 1000px) {
-  .search-form .input { width: 3rem; }
-  .search-form:focus-within .input { width: 12rem; }
-}
+/* There used to be a rule here shrinking the field to its button between 821px
+   and 1000px, against a wrap I estimated at "around 780px of content" and never
+   measured. Row one is brand, companions and search — the categories moved to
+   row two in the same change — so there is a wide band of empty space to the
+   left of the field at exactly those widths, and it was collapsing a search box
+   to avoid a wrap that does not happen.
+   
+   If row one ever does run out of room, .header-inner wraps, which is a
+   degradation and not a break. */
 
 /* ── The hamburger ──────────────────────────────────────────────────────
    A checkbox, not a script. The previous version toggled a class from
