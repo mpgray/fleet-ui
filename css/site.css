@@ -663,6 +663,28 @@ summary:focus-visible,
   line-height: var(--lh-snug);
 }
 .tools-band { margin: 0 0 var(--space-7); }
+
+/* A sentence between the Tools heading and the cards, saying what the tools
+   are FOR on this site. The heading alone says "Tools", which a reader can
+   already see from the cards under it.
+
+   The pull-up is deliberate. .section-title carries its own space-4 bottom
+   margin as a heading-to-content gap, and a paragraph landing in that gap
+   reads as detached from the heading it belongs to rather than as its
+   subtitle. Pulling back by space-2 puts the sentence under the rule that
+   ends the heading and leaves the full gap below it, where the cards are.
+
+   In the 1-2 tool rail (.hero-tools) the same paragraph appears under
+   .aside-heading, which has no rule and a smaller bottom margin, so the
+   pull-up is cancelled there. */
+.tools-intro {
+  max-width: var(--measure);
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--step--1);
+  line-height: var(--lh-snug);
+}
+.hero-tools .tools-intro { margin-top: 0; margin-bottom: var(--space-3); }
 .tool-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
