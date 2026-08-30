@@ -1,6 +1,7 @@
 /* valheim — valheim.top: forest-shadow greens, bronze accents, rune-inspired
    serif headings. */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('../fonts/inter/index.css');  /* Inter */
+@import url('../fonts/cinzel/index.css');  /* Cinzel */
 
 :root {
   --bg: #0c120f;

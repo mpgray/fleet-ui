@@ -1,5 +1,6 @@
 /* tavernmaster — tavernmaster.top: the room after dark. Oak, candle, brass. */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Mulish:wght@400;500;600&display=swap');
+@import url('../fonts/mulish/index.css');  /* Mulish */
+@import url('../fonts/fraunces/index.css');  /* Fraunces */
 
 :root {
   --bg: #1b1512;

@@ -1,5 +1,6 @@
 /* bright — lifehackerguru.com: clean white, punchy orange, friendly sans. */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&family=Open+Sans:wght@400;600&display=swap');
+@import url('../fonts/open-sans/index.css');  /* Open Sans */
+@import url('../fonts/nunito/index.css');  /* Nunito */
 
 :root {
   --bg: #ffffff;

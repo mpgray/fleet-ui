@@ -2,7 +2,8 @@
    The nearest neighbours are bottomlineinsight (navy field, gains green) and
    craftsman (warm neutrals, forest green, slab). This one stays cool and grey
    and puts the only warm colour in the accent, so the three do not blur. */
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Public+Sans:wght@400;600&display=swap');
+@import url('../fonts/public-sans/index.css');  /* Public Sans */
+@import url('../fonts/lora/index.css');  /* Lora */
 
 :root {
   --bg: #f1f3f6;

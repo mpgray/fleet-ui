@@ -1,5 +1,6 @@
 /* rimworld — rim-world.top: a colony on dry ground. Prairie tan, terracotta. */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap');
+@import url('../fonts/inter/index.css');  /* Inter */
+@import url('../fonts/space-grotesk/index.css');  /* Space Grotesk */
 
 :root {
   --bg: #f2efe7;

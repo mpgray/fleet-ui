@@ -1,5 +1,6 @@
 /* blacksmith — blacksmithmaster.top: the forge. Soot, steel, ember orange. */
-@import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('../fonts/inter/index.css');  /* Inter */
+@import url('../fonts/zilla-slab/index.css');  /* Zilla Slab */
 
 :root {
   --bg: #131313;
