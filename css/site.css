@@ -629,7 +629,8 @@ summary:focus-visible,
    The image sits beside the headline, not above it. Full-bleed at 18/8 it was
    about 490px tall on an 1100px page, so the entire first screen was one
    article's photograph and the grid of everything else began below the fold.
-   A thumbnail still tells you the lead has a picture; it just stops being the
+   Beside the headline it is bounded by the headline: it can be as tall as the
+   text block and no taller, which is a picture with presence rather than the
    page. .hero-link-media is set by the template only when there is an image —
    without it the single text child would be laid into the image column.
 
@@ -746,19 +747,26 @@ summary:focus-visible,
   color: inherit;
 }
 .hero-link-media {
-  grid-template-columns: 9rem minmax(0, 1fr);
-  align-items: center;
+  grid-template-columns: 16rem minmax(0, 1fr);
+  /* stretch, not center: the image column is meant to be as tall as the
+     headline block beside it, and a centred item is only as tall as itself. */
+  align-items: stretch;
   gap: var(--space-5);
 }
-/* A hard ceiling in absolute units, not only a ratio. An aspect-ratio alone
-   still scales with the column, which is how this stayed overpowering after
-   being "made smaller" once already. max-height means it cannot dominate the
-   page whatever the column does. */
+/* Sized by its NEIGHBOUR, not by a ceiling of its own.
+
+   This was capped at 9rem x 7rem with a 4:3 ratio, after two rounds of being
+   made smaller for dominating the page. What it did at that size was read as a
+   thumbnail stranded beside a headline three times its height. The column is
+   fixed and modest, so width still cannot run away; height now comes from the
+   text, which is the thing the image is supposed to be balancing.
+
+   min-height is what replaces the old max-height as the floor: a one-line
+   headline would otherwise collapse the row and leave a letterbox strip. */
 .hero-image {
   width: 100%;
-  max-width: 9rem;
-  max-height: 7rem;
-  aspect-ratio: 4 / 3;
+  height: 100%;
+  min-height: 10rem;
   object-fit: cover;
   border-radius: var(--r-2);
 }
@@ -782,8 +790,8 @@ summary:focus-visible,
   /* Still side by side on a phone, just narrower. Stacking it put a
      full-width image back above the headline, which is the thing being
      removed. */
-  .hero-link-media { grid-template-columns: 6.5rem minmax(0, 1fr); gap: var(--space-4); }
-  .hero-image { max-width: 6.5rem; max-height: 5rem; }
+  .hero-link-media { grid-template-columns: 10rem minmax(0, 1fr); gap: var(--space-4); }
+  .hero-image { min-height: 7rem; }
 }
 
 /* ── Home: content column + skim rail ───────────────────────────────────
@@ -1300,7 +1308,11 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
 /* The brand end of the row takes the slack, so the links and the form sit
    against the right edge instead of floating in the middle of it. */
 .footer-brand { display: flex; align-items: center; gap: var(--space-3); margin-right: auto; min-width: 0; }
-.footer-preview-image { height: 2.2rem; width: auto; flex-shrink: 0; border-radius: var(--r-1); }
+/* Tall enough to be a picture rather than a favicon. At 2.2rem it was shorter
+   than the two lines of brand text next to it and read as a favicon that had
+   lost its way. The footer's brand row grows to match; the subscribe form is on
+   its own wrapped row, so it is not pushed by this. */
+.footer-preview-image { height: 4.5rem; width: auto; flex-shrink: 0; border-radius: var(--r-1); }
 .footer-inner nav { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
 .footer-inner a { color: var(--muted); text-decoration: none; }
 .footer-inner a:hover { color: var(--accent); }
