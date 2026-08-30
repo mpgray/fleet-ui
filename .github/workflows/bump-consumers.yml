@@ -169,10 +169,24 @@ jobs:
           #
           # One commit by 'fleet-ui bump' is this workflow's own previous run
           # and is safe to replace. Anything else is not ours.
+          #
+          # AHEAD=0 is the SAFEST state, not a suspicious one. It means the last
+          # pin PR was merged and its branch was left behind, so the branch is
+          # now an ancestor of main and there is nothing on it to destroy.
+          # Checking the author list in that case asked whether an empty range
+          # was authored by this workflow, got '', compared it to
+          # 'fleet-ui bump,' and refused — so every consumer that MERGED its pin
+          # PR rather than closing it was silently locked out of all future
+          # bumps. game-db and toolbox sat two pins behind for two days that
+          # way, and the run stayed green because this is a warning and an
+          # exit 0. articles-ai kept working only because its previous pin PR
+          # had been closed and the branch deleted, so this block never ran.
+          #
+          # Authors only matter when there is a commit to attribute.
           if git rev-parse --verify --quiet "origin/$BRANCH" >/dev/null; then
             AHEAD="$(git rev-list --count "origin/main..origin/$BRANCH")"
             AUTHORS="$(git log --format='%an' "origin/main..origin/$BRANCH" | sort -u | tr '\n' ',')"
-            if [ "$AHEAD" -gt 1 ] || [ "$AUTHORS" != "fleet-ui bump," ]; then
+            if [ "$AHEAD" -gt 1 ] || { [ "$AHEAD" -eq 1 ] && [ "$AUTHORS" != "fleet-ui bump," ]; }; then
               echo "::warning::$BRANCH carries work that is not this workflow's" \
                    "($AHEAD commit(s), authors: $AUTHORS). Refusing to force-push over it."
               gh pr comment "$BRANCH" --body \
