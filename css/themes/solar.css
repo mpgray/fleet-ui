@@ -1,5 +1,6 @@
 /* solar — diysolar: high desert daylight. Warm sand, deep sky, amber accents. */
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap');
+@import url('../fonts/barlow/index.css');  /* Barlow */
+@import url('../fonts/barlow-condensed/index.css');  /* Barlow Condensed */
 
 :root {
   --bg: #fbf8f2;

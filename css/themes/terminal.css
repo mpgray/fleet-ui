@@ -1,5 +1,5 @@
 /* terminal — lan.surf: CRT green-on-black, self-hosted networking vibes. */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap');
+@import url('../fonts/ibm-plex-mono/index.css');  /* IBM Plex Mono */
 
 :root {
   --bg: #060a06;

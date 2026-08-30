@@ -1,5 +1,6 @@
 /* banished — banished.top: a hard winter. Cold grey wool, slate-blue accent. */
-@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap');
+@import url('../fonts/work-sans/index.css');  /* Work Sans */
+@import url('../fonts/spectral/index.css');  /* Spectral */
 
 :root {
   --bg: #eef0ed;

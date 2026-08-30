@@ -1,5 +1,6 @@
 /* craftsman — drivewayhome.com: warm neutrals, forest green, sturdy slabs. */
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap');
+@import url('../fonts/source-sans-3/index.css');  /* Source Sans 3 */
+@import url('../fonts/roboto-slab/index.css');  /* Roboto Slab */
 
 :root {
   --bg: #f4f2ee;

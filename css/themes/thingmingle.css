@@ -1,6 +1,7 @@
 /* thingmingle — thingmingle.com: a bright workshop. White bench, filament violet.
    The only non-game site in this batch, and it should not look like one. */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&family=Inter:wght@400;500;600&display=swap');
+@import url('../fonts/inter/index.css');  /* Inter */
+@import url('../fonts/outfit/index.css');  /* Outfit */
 
 :root {
   --bg: #ffffff;

@@ -1,6 +1,7 @@
 /* dontstarve — dontstarvetogether.top: gothic paper-cutout. Charcoal, bone,
    a blood accent. The one preset in the fleet that should read as illustrated. */
-@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Inter:wght@400;500;600&display=swap');
+@import url('../fonts/inter/index.css');  /* Inter */
+@import url('../fonts/special-elite/index.css');  /* Special Elite */
 
 :root {
   --bg: #16151a;

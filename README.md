@@ -18,8 +18,43 @@ templates/macros/         icons.html  — icon(name) -> <svg><use href="#icon-na
                           header.html — nav_toggle(), nav_row() (the two rows)
                           fleet.html  — cross-links, split across those rows
 templates/partials/       icon_sprite.html — self-hosted inline SVG sprite
+css/fonts/<family>/       vendored woff2 faces + the @font-face CSS + LICENSE,
+                          one directory per family. Generated — see below.
 scripts/check_contrast.py CI: every preset clears WCAG AA. Runs standalone.
+scripts/vendor_fonts.py   CI: syncs css/fonts/ to the families the presets name.
 ```
+
+## Typefaces
+
+The faces are **served from this repo**, not fetched from Google. A preset that
+`@import`s from `fonts.googleapis.com` makes every reader's browser call Google
+on every page load, which puts a third party between the consumer and its
+readers and has to be disclosed in each one's privacy policy.
+
+**The presets are the source of truth.** `scripts/vendor_fonts.py` reads
+`--font-body` and `--font-heading` out of every preset, vendors exactly those
+families from [Fontsource](https://fontsource.org), and deletes the files of any
+family no longer named. There is no list to keep in step.
+
+| You want to | You do |
+|---|---|
+| add a font | edit the preset's `--font-heading` |
+| retire a font | edit the preset |
+| add a weight | nothing — every published weight is vendored |
+| add a preset using existing families | nothing |
+
+CI runs the script on every pull request and **commits the result into your
+branch**, so editing the preset is the whole job. It runs here rather than at
+deploy time on purpose: consumers pin this repo by SHA and cache-bust their
+stylesheets with that hash, so faces fetched at deploy time would not be the
+bytes the pin identifies — and every consumer's deploy would grow a hard
+dependency on an npm CDN being reachable.
+
+Every family is vendored with all its published weights and both latin subsets.
+That costs disk and costs a reader nothing: the files are split per
+`unicode-range`, so a browser downloads only what it renders. Each family
+directory carries the upstream `LICENSE` — these faces are redistributed here,
+and both OFL-1.1 and Apache-2.0 require the notice to travel with them.
 
 ## The design
 
@@ -167,14 +202,22 @@ consume this repo — that is the second half of phase 0.
 
 ## Known issues
 
-- **Fonts still load via `@import` inside each theme file**, creating a serial
-  request chain — the browser can't discover the font until the theme CSS has
-  parsed. Consumers now emit `<link rel="preconnect">` for the Google Fonts
-  hosts, which removes the DNS and TLS half of that chain, **but the chain
-  itself remains**. The real fix is self-hosting the faces into this repo,
-  which brings font binaries and a licence review with it. Not done.
+- **The presets still `@import` from Google as well as loading the vendored
+  faces.** The faces are now served from this repo (see *Typefaces* above), but
+  the old `@import` lines are deliberately still in place for one release so the
+  self-hosted files can be verified rendering in production before anything
+  depends on them alone. Until they come out, a reader's browser still calls
+  Google and the blogs' privacy policies still disclose it — the disclosure is
+  derived from these files, so it retires itself when the imports do.
 
 Resolved since the extraction, listed so a reader of an old branch knows:
+
+- ~~Consumers emit `preconnect` for the Google Fonts hosts, but the serial
+  request chain remains~~ — the faces are vendored here now. Worth knowing why
+  the `preconnect` mitigation had stopped working at all: Cloudflare fronts
+  every consumer domain and its Fonts feature rewrites Google Fonts **links in
+  HTML**, so it stripped those hints while leaving the `@import` inside the CSS
+  untouched. The chain was being paid in full with the mitigation removed.
 
 - ~~No cache-busting~~ — consumers append `?v=<pinned sha>`, so the URL changes
   exactly when the stylesheet does.
