@@ -124,6 +124,13 @@ h1, h2, h3, h4 {
 
 a { color: var(--accent); }
 img { max-width: 100%; height: auto; }
+/* A <picture> that wraps a responsive <img> is a source list, not a box. Every
+   layout rule in this file is written against the <img> — .hero-image is a grid
+   item that stretches, .card-image is the thing .card-media clips — and an
+   intervening inline wrapper would take that role and hand the image an
+   auto-height parent to resolve `height: 100%` against. `contents` removes the
+   wrapper from layout and leaves the rules pointing at what they name. */
+picture { display: contents; }
 
 /* Dates, counts and stats sit in columns often enough that proportional
    figures visibly ripple. */
