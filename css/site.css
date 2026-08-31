@@ -131,6 +131,14 @@ img { max-width: 100%; height: auto; }
    auto-height parent to resolve `height: 100%` against. `contents` removes the
    wrapper from layout and leaves the rules pointing at what they name. */
 picture { display: contents; }
+/* And <source> must not become one of those children.
+   The UA stylesheet leaves <source> as `display: inline`, which generates
+   nothing inside a normal <picture> because the element is void. Promote its
+   parent to `contents` and it is a grid/flex item like any other: it took the
+   hero's 16rem image column, pushed the <img> into the text column and the
+   headline onto a second row. It carries no content in any layout, so the
+   correct display for it is none. */
+picture > source { display: none; }
 
 /* Dates, counts and stats sit in columns often enough that proportional
    figures visibly ripple. */
