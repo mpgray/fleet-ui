@@ -1,0 +1,68 @@
+/* videogame — the shared base for *.videogaming.top. Neutral by design.
+ *
+ * Every other theme in this directory dresses ONE site: valheim is mossy stone,
+ * dune is spice orange, rimworld is prairie dirt. That works because there are
+ * a dozen of them and each was drawn for a specific world.
+ *
+ * The videogaming network is sized in the hundreds, and one CSS file per game
+ * does not scale — nor should it, since nobody is going to hand-draw a palette
+ * for the four hundredth game. So this preset is deliberately GENERIC: a dark
+ * reading surface that suits guides and build tables for any game, with the
+ * only genuinely game-specific value — the accent — expected to be overridden
+ * per site.
+ *
+ * That override is not a hack; it is step 4 of the load order this repo already
+ * documents. articles-ai serves /site-theme.css from sites.theme_overrides, so
+ * a per-game accent is one validated row in a database rather than a file, a
+ * commit and a pin bump.
+ *
+ *     UPDATE sites SET theme_overrides = '{"--accent": "#f0a020"}'
+ *     WHERE domain = 'stardewvalley.videogaming.top';
+ *
+ * The default accent below is a mid amber that reads on this background and
+ * belongs to no game in particular. A site that never sets an override still
+ * looks finished — the whole point of a base rather than a template.
+ *
+ * DARK, unlike most of this directory. Game guides are read beside the game,
+ * often at night and often on a second screen, and every large games site the
+ * audience already uses is dark. The blogs ship no JavaScript, so there is no
+ * theme toggle to fall back on: the default is the only choice a reader gets.
+ */
+@import url('../fonts/inter/index.css');  /* Inter */
+@import url('../fonts/barlow-condensed/index.css');  /* Barlow Condensed */
+
+:root {
+  --bg: #14161b;
+  --surface: #1c1f26;
+  --text: #e4e7ec;
+  --muted: #9aa1ad;
+  --accent: #e8a33d;
+  --accent-contrast: #14161b;
+  --border: #2b303a;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Barlow Condensed', system-ui, sans-serif;
+  --radius: 4px;
+  --header-bg: #0f1115;
+  --header-text: #e4e7ec;
+  --shadow-color: rgba(0, 0, 0, 0.45);
+}
+
+/* Two faces rather than one, and the split is doing work. Inter carries long
+ * bodies and — the reason it is here rather than a warmer face — the numeric
+ * tables that make up most of this network's value: damage figures, ratios,
+ * spawn rates, ingredient counts. Barlow Condensed sets headings, which on a
+ * guide are often long and specific ("Every seed you can plant in year one"),
+ * and a condensed face keeps those on one line without dropping to a size that
+ * stops reading as a heading.
+ *
+ * --accent-contrast is the dark background rather than white: the accent is a
+ * mid amber, and white text on it fails contrast at body sizes. A per-site
+ * override that moves to a DARK accent must move this token with it. That is
+ * the one pairing an override can silently get wrong, because the tokens are
+ * validated for syntax and nothing checks that two of them read against each
+ * other.
+ *
+ * --radius is 4px rather than the 6-8px most presets use. Guide pages are dense
+ * with tables and code-ish blocks, and softer corners at that density read as
+ * bubbly rather than calm.
+ */
