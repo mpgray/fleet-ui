@@ -18,8 +18,12 @@ name: Bump consumer pins
 # comment on the push step for what that looked like in practice.
 #
 # Requires: FLEET_PIN_TOKEN — a fine-grained PAT with Contents: write and
-# Pull requests: write on mpgray/articles-ai, mpgray/game-db and
-# mpgray/toolbox — every repo in the matrix below. The default
+# Pull requests: write on mpgray/articles-ai, mpgray/game-db,
+# mpgray/toolbox and mpgray/videogaming — every repo in the matrix below.
+# ADDING A CONSUMER MEANS WIDENING THAT PAT, and the failure if you forget is
+# quiet in the wrong direction: the job fails on one matrix leg while the other
+# three succeed, so the run is red but the fleet still looks mostly bumped. The
+# default
 # GITHUB_TOKEN cannot do this: it is scoped to this repository only.
 
 on:
@@ -43,12 +47,17 @@ jobs:
       # workflow exists to make unnecessary — the risk was never that toolbox
       # was behind, it was that nothing would tell you when it fell behind.
       #
+      # videogaming joined on 2026-08-31, with its first commit rather than
+      # months later — which is the whole lesson of the toolbox line above. It
+      # vendors fleet-ui for the header and footer its per-game blogs share,
+      # and it is the first consumer that is not itself a blog.
+      #
       # ai-help is deliberately NOT here. It renders fleet themes but keeps its
       # CSS inline and has no vendor/fleet-ui; see the comment at the top of
       # ai-help/app/templates/base.html, which records that as an open decision
       # rather than an oversight. Adding it means settling that decision first.
       matrix:
-        consumer: [articles-ai, game-db, toolbox]
+        consumer: [articles-ai, game-db, toolbox, videogaming]
       fail-fast: false
 
     steps:
