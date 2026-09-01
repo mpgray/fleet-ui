@@ -264,7 +264,18 @@ jobs:
           # The branch is stable, so the PR usually already exists and its title
           # still names the OLD sha. Edit it rather than leaving a PR whose title
           # disagrees with its diff.
-          if gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
+          # --state open, and `gh pr list` rather than `gh pr view`.
+          #
+          # `gh pr view <branch>` returns the most recent pull request for that
+          # branch REGARDLESS OF STATE, merged ones included. This branch is
+          # rolling and deliberately reused, so the moment its first pin PR was
+          # merged, every later bump found that merged PR, took this path, and
+          # called `gh pr edit` on it. The run went green, printed "updated the
+          # open pin PR", and left the new pin stranded on a branch with no
+          # open PR anywhere — which is the worst shape for this failure,
+          # because the workflow reports success and the pin simply stops
+          # arriving. Four consumers sat one fleet-ui version behind that way.
+          if [ -n "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" ]; then
             gh pr edit "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE"
             echo "updated the open pin PR to $NEW_SHA"
           else
