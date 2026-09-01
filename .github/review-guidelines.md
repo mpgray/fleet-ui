@@ -4,8 +4,11 @@ Read by Copilot via `.github/copilot-instructions.md`, and by the weekly audit.
 
 This repo is shared CSS, theme presets and Jinja macros for every site in the
 fleet. Nothing here is deployed. It reaches production by being pinned as a
-submodule, which means a mistake here does not fail here — it fails in two
-other repositories, at whatever later moment someone merges a pin bump.
+submodule, which means a mistake here does not fail here — it fails in the four
+repositories that vendor it (`articles-ai`, `game-db`, `toolbox`, `videogaming`),
+at whatever later moment someone merges a pin bump. The `consumer:` matrix in
+`bump-consumers.yml` is the authoritative list; `ai-help` renders fleet themes
+with its CSS inline and is deliberately not one of them.
 
 ## The invariants
 
