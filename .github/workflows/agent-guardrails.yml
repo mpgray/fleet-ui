@@ -15,4 +15,4 @@ on:
 
 jobs:
   guardrails:
-    uses: mpgray/fleet-ci/.github/workflows/guardrails-core.yml@2933671c6797a0684327715e6f1bcd359120119f
+    uses: mpgray/fleet-ci/.github/workflows/guardrails-core.yml@cb032c81513f56f714656c645585f066b4ea70b9

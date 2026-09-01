@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   agent:
-    uses: mpgray/fleet-ci/.github/workflows/code-health.yml@2933671c6797a0684327715e6f1bcd359120119f
+    uses: mpgray/fleet-ci/.github/workflows/code-health.yml@cb032c81513f56f714656c645585f066b4ea70b9
     secrets: inherit
     with:
       enable_fix: false
