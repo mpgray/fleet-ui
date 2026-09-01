@@ -1,0 +1,18 @@
+name: Agent guardrails
+
+# The shared half of the block list is fleet-ci's guardrails-core: the
+# workflows, the review guidelines, .github/actions/, applied migrations, and
+# deleting or renaming tests out of tests/. This file carries only what is
+# fleet-ui's own.
+#
+# Keep extra_rules in step with the "what you may not touch" text the agent
+# prompts are given — a prompt that forbids less than the check bills you for
+# the argument.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  guardrails:
+    uses: mpgray/fleet-ci/.github/workflows/guardrails-core.yml@156021e5a1a6ce19127a177277940e4800f0b1bb
