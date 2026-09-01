@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   agent:
-    uses: mpgray/fleet-ci/.github/workflows/docs-audit.yml@ddf5b83087307572a09c05e7eb01f53f66583811
+    uses: mpgray/fleet-ci/.github/workflows/docs-audit.yml@fbe0a713a574be79b8d8f5e76cac5faf10a55c5d
     secrets: inherit
     with:
       # fleet-ui has no pyproject.toml and no uv.lock — it is templates and CSS

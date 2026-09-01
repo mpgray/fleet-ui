@@ -24,7 +24,7 @@ concurrency:
 jobs:
   agent:
     if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'bug'
-    uses: mpgray/fleet-ci/.github/workflows/bug-triage.yml@ddf5b83087307572a09c05e7eb01f53f66583811
+    uses: mpgray/fleet-ci/.github/workflows/bug-triage.yml@fbe0a713a574be79b8d8f5e76cac5faf10a55c5d
     secrets: inherit
     with:
       # fleet-ui has no pyproject.toml and no uv.lock — it is templates and CSS
