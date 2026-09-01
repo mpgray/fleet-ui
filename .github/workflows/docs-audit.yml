@@ -1,0 +1,38 @@
+name: Docs audit
+
+# Checks this repo's documentation against its code. Opens documentation-only
+# pull requests and files an issue for what it cannot fix itself.
+#
+# Read-only on code, enforced by the `docs-audit/` branch rule in fleet-ci's
+# guardrails-core rather than by the prompt asking nicely.
+
+on:
+  schedule:
+    - cron: '0 6 * * 3'
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '**/*.md'
+
+concurrency:
+  group: docs-audit-${{ github.event.pull_request.number || 'scheduled' }}
+  cancel-in-progress: true
+
+jobs:
+  agent:
+    uses: mpgray/fleet-ci/.github/workflows/docs-audit.yml@cb032c81513f56f714656c645585f066b4ea70b9
+    secrets: inherit
+    with:
+      # fleet-ui has no pyproject.toml and no uv.lock — it is templates and CSS
+      # with two pip dependencies. The shared workflow's `uv sync --dev` default
+      # would fail here, so setup is spelled out.
+      setup: pip install jinja2 tinycss2
+      claim_sources: |
+        Where this repo's countable truths live — check these rather than
+        trusting a number in prose:
+          * the twelve CSS custom properties every preset must declare —
+            `scripts/check_contrast.py` is the check, not the docs
+          * the consumer list — each consumer's `.gitmodules`, and the
+            `consumer:` matrix in `bump-consumers.yml`. ai-help is deliberately
+            NOT a consumer; the docs have said four, and said two.

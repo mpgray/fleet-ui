@@ -1,216 +1,42 @@
 name: Code health
 
-# A weekly look at the repository as a whole, which no per-PR review can give
-# you. A PR review sees a diff; it cannot see that a helper has had no callers
-# for two months, that two modules have drifted into different conventions for
-# the same thing, or that a pinned source has gone stale.
+# Weekly audit (audit only — this repo has never had a fix job). Shared with the fleet; the probes and the
+# repo-specific prompt text are the inputs below.
 #
-# Writes to ONE issue and keeps updating it. A tool that opens a new issue every
-# week is a tool you mute after three weeks.
-#
-# Requires: OPENROUTER_API_KEY (or AI_GATEWAY_TOKEN + AI_BASE_URL)
+# The cron is this repo's slot in a deliberate three-hourly stagger, recorded
+# in fleet-ci/fleet.yml so it is data rather than six good intentions.
 
 on:
   schedule:
-    # Mondays, 06:00 UTC — before the week's work rather than after it. This is
-    # the only repo in the fleet still on 06:00; the others were staggered after
-    # 2026-08-10, when all three fired together and put five agent runs inside
-    # 46 minutes on one shared API key. Keep them apart.
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  issues: write
-
-# ── Which endpoint the agents talk to ─────────────────────────────────────
-# The ANTHROPIC_* names below are not ours and cannot be renamed: they are the
-# Claude Code CLI's own variables, and the CLI is what this action runs. They
-# name a protocol, not a vendor — ANTHROPIC_BASE_URL means "where the Messages
-# API lives", and here it is OpenRouter.
-#
-#   OpenRouter (default) — set the OPENROUTER_API_KEY secret, leave AI_BASE_URL unset.
-#   Anything else        — set AI_BASE_URL to its origin (no trailing /v1) and
-#                          AI_GATEWAY_TOKEN to its key.
-#
-# Model ids belong to whichever endpoint is selected, so the MODEL_* variables
-# move with AI_BASE_URL. See articles-ai/PIPELINE.md.
-#
-# Every agent job here is gated on the AGENTS_ENABLED repository variable.
-# `gh variable set AGENTS_ENABLED --body off` stops all agent spend in this repo
-# immediately — no commit, no PR, no workflow edit. The brake has to live
-# somewhere an agent cannot reach. Anything other than the literal `off` —
-# including unset — leaves them enabled.
+concurrency:
+  group: code-health
+  cancel-in-progress: false
 
 jobs:
-  audit:
-    runs-on: ubuntu-latest
-    if: vars.AGENTS_ENABLED != 'off'
-    # The default ceiling is six hours. An agent that wedges — a retry storm, a
-    # loop on a refused tool — should cost a coffee, not a day.
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          submodules: recursive
-
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-      - run: pip install jinja2 tinycss2
-
-      # Facts first, so the model is reading measurements rather than forming
-      # impressions. Anything mechanically checkable should be checked
-      # mechanically — it is cheaper and it cannot be wrong.
-      - name: Collect the measurable things
-        run: |
-          {
-            echo '## Tokens used by site.css'
-            grep -o 'var(--[a-z-]*)' css/site.css | sort -u
-            echo
-            echo '## Selectors per stylesheet'
-            for f in css/site.css css/themes/*.css; do
-              printf '%s %s\n' "$(grep -c '{' "$f")" "$f"
-            done | sort -rn
-            echo
-            echo '## Consumers pinned at'
-            echo '(checked by the bump workflow, not here)'
-            echo
-            echo '## Churn, last 90 days'
-            git log --since=90.days --name-only --format= -- css templates \
-              | grep -v '^$' | sort | uniq -c | sort -rn
-          } > health.txt 2>&1
-          cat health.txt
-
-      - name: Resolve the model and endpoint
-        id: m
-        uses: ./.github/actions/resolve-model
-        with:
-          primary: ${{ vars.MODEL_CODE_HEALTH || 'anthropic/claude-haiku-4.5' }}
-          opus: ${{ vars.MODEL_ALIAS_OPUS }}
-          sonnet: ${{ vars.MODEL_ALIAS_SONNET }}
-          haiku: ${{ vars.MODEL_ALIAS_HAIKU }}
-          default_base_url: ${{ vars.AI_BASE_URL }}
-
-      - name: Preflight the AI endpoint
-        uses: ./.github/actions/ai-preflight
-        with:
-          base_url: ${{ steps.m.outputs.base_url }}
-          token: ${{ steps.m.outputs.credential == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
-          model: ${{ steps.m.outputs.model }}
-
-      - uses: anthropics/claude-code-action@v1
-        continue-on-error: true
-        # GITHUB_TOKEN, deliberately, and NOT AGENT_PAT.
-        #
-        # AGENT_PAT exists for one reason: pull requests opened with
-        # GITHUB_TOKEN do not fire `on: pull_request`, so an agent PR would
-        # arrive with no checks. This repository's only agent job opens no pull
-        # request — it rewrites one issue, and an issue edit needs no
-        # re-trigger. (The PRs into the consumers come from
-        # bump-consumers.yml, which uses FLEET_PIN_TOKEN.)
-        #
-        # What the PAT would cost here is the `permissions:` block above, which
-        # is already correctly `contents: read`. Those scopes constrain
-        # GITHUB_TOKEN only; a user PAT carries its own and ignores them
-        # entirely, so passing it makes that read-only declaration decorative.
-        # With GITHUB_TOKEN it is the actual ceiling.
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Endpoint and credential, chosen by the prefix on this job's MODEL_*
-          # variable. GH_TOKEN above is GITHUB_TOKEN rather than AGENT_PAT — a
-          # deliberate choice explained in the block above it, and the reason
-          # this env had to be added by hand: the sweep that wired every other
-          # agent job keyed off the AGENT_PAT pattern and did not match here.
-          ANTHROPIC_BASE_URL: ${{ steps.m.outputs.base_url }}
-          ANTHROPIC_AUTH_TOKEN: ${{ steps.m.outputs.credential == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ steps.m.outputs.credential == 'openrouter' && secrets.OPENROUTER_API_KEY || secrets.AI_GATEWAY_TOKEN || secrets.OPENROUTER_API_KEY }}
-          # Unset aliases fall back to Anthropic's own default ids, which is how
-          # a job pinned to a cheap model emits an Opus-class request nobody
-          # chose. Default them to this job's own model.
-          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ steps.m.outputs.opus || steps.m.outputs.model }}
-          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ steps.m.outputs.sonnet || steps.m.outputs.model }}
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ steps.m.outputs.haiku || steps.m.outputs.model }}
-          # Labels every request this job makes, in OpenRouter's activity log.
-          # The point is the requests the GitHub log CANNOT show you: alias
-          # traffic, background calls, retries. A key tells you which repo; this
-          # tells you which job, which is the granularity you need to find a
-          # model id nobody selected.
-          ANTHROPIC_CUSTOM_HEADERS: |
-            X-Title: ${{ github.repository }} code-health/audit
-            HTTP-Referer: ${{ github.server_url }}/${{ github.repository }}
-        with:
-          # Without this the action falls back to OIDC to mint a token via
-          # the Claude GitHub App, which is not installed here, and the run
-          # dies with "Could not fetch an OIDC token". The workflow's own
-          # token already carries the permissions this job declares above.
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # --max-turns is a BACKSTOP, not a budget. It "exits with an error when
-          # the limit is reached", so a run that trips it has paid for every turn
-          # and produced nothing — lowering it does not lower spend, it raises
-          # the odds of paying full price for no result. It sits above what the
-          # job needs; the prompt is what lands the plane. timeout-minutes is
-          # the real runaway guard.
-          claude_args: >-
-            --model ${{ steps.m.outputs.model }}
-            --max-turns 30
-            --allowedTools "Bash(git log:*),Bash(git grep:*),Bash(gh issue:*),Read,Grep,Glob"
-          prompt: |
-            Audit the health of ${{ github.repository }} and record it in a
-            single GitHub issue titled exactly "Code health".
-
-            Measurements already collected are in health.txt — read that
-            first. Do not re-derive anything it already answers.
-
-            Find the issue with `gh issue list --search "Code health" --state
-            open`. If it exists, edit its body with `gh issue edit`; only create
-            one if there is none. One issue, rewritten each week — not a new one
-            every Monday.
-
-            This repository is shared CSS, theme presets and Jinja macros for
-            every site in the fleet. Nothing here is deployed directly; it
-            reaches production by being pinned as a submodule. Look for:
-
-              * selectors and macros nothing in any consumer uses — this is the
-                repo where dead code is hardest to notice, because the callers
-                are in other repositories
-              * a theme preset that has drifted from the others: a token
-                declared by nine themes and not the tenth renders as nothing
-              * hardcoded colours, fonts or spacing in site.css that should be
-                tokens, since those are exactly what cannot be themed
-              * anything in site.css that is specific to one consumer's markup
-                and therefore does not belong here
-              * accessibility regressions: colour pairs with too little
-                contrast, focus styles removed, interactive targets under 44px
-
-            Write the issue as:
-
-              * a two-line summary: is this repository in good shape or not
-              * findings, most important first, each with the file and a
-                one-sentence statement of what it costs to leave alone
-              * a short "fixed since last week" section if you can tell from
-                git log that a previous finding is resolved
-
-            Be selective. Ten findings nobody acts on is worse than three
-            somebody does. If the repository is genuinely in good shape, say
-            that plainly and keep the issue short — an audit that always finds
-            something is an audit nobody believes.
-
-            ## Your turn budget
-
-            You have a limited number of turns and running out is a hard error
-            that discards everything you have done. So treat the issue as the
-            deliverable, not the last step: once you have ONE finding you are
-            confident in, write the issue with just that, then edit it to add
-            more as you confirm them. An issue with two findings beats a perfect
-            audit that was never posted.
-
-            If a tool call is refused, do not retry it — that is a billed turn
-            spent for nothing. If you are running low, stop investigating and
-            write up what you have, naming what you did not get to.
-
-
-      - name: What this run spent
-        if: always()
-        uses: ./.github/actions/agent-cost-report
+  agent:
+    uses: mpgray/fleet-ci/.github/workflows/code-health.yml@cb032c81513f56f714656c645585f066b4ea70b9
+    secrets: inherit
+    with:
+      enable_fix: false
+      health_probes: |
+        echo '## Tokens used by site.css'
+        grep -o 'var(--[a-z-]*)' css/site.css | sort -u
+        echo
+        echo '## Selectors per stylesheet'
+        for f in css/site.css css/themes/*.css; do
+          printf '%s %s\n' "$(grep -c '{' "$f")" "$f"
+        done | sort -rn
+        echo
+        echo '## Consumers pinned at'
+        echo '(checked by the bump workflow, not here)'
+        echo
+        echo '## Churn, last 90 days'
+        git log --since=90.days --name-only --format= -- css templates \
+          | grep -v '^$' | sort | uniq -c | sort -rn
+      audit_focus: |
+              * a theme preset missing a token site.css uses, which renders as
+                nothing rather than as an error
+      forbidden_summary: 'no changes to the twelve-token CSS contract without every preset declaring them'
