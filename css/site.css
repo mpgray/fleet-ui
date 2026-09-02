@@ -1030,6 +1030,98 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
   }
 }
 
+/* ── Filters ────────────────────────────────────────────────────────────
+   Promoted from game-db, same as the tables below, and for the same reason:
+   a second consumer turned up needing it.
+
+   game-db has run these at 808 entities since its type index grew a filter
+   bar; videogaming.top needs the identical control to make a directory of a
+   few hundred game sites browsable. Two consumers with the same need is the
+   bar this repo sets — and the alternative was the hub inventing a second
+   dialect for a control that already exists, styled to match by eye.
+
+   The CSS is what moved. game-db's `filter_bar()` macro did NOT: its
+   parameters name `etype` and `range_fields`, concepts only a game database
+   has, which is exactly the test in the README for what is not fleet code.
+   Each consumer writes its own markup against these classes.
+
+   `.filter-chip` extends `.chip` above rather than restyling it, so a chip is
+   one thing everywhere and a filter is a chip that can be on.
+
+   The selected state is an accent BORDER and accent text, never an accent
+   fill. A filled chip has to pick a text colour, and the only honest one is
+   --accent-contrast, which a preset is free to set dark — `videogame` does.
+   Border-only reads as selected against every preset in the directory without
+   knowing which one it is on. */
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-6);
+  padding-bottom: var(--space-5);
+  border-bottom: var(--rule) solid var(--border);
+}
+.filter-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+/* --step--2 is already labelled "eyebrow, filter labels" in the scale at the
+   top of this file. The scale anticipated this block; it just had nowhere to
+   live until a second site wanted one. */
+.filter-label {
+  color: var(--muted);
+  font-size: var(--step--2);
+  text-transform: uppercase;
+  letter-spacing: var(--track-eyebrow);
+  min-width: 5rem;
+}
+.filter-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+/* game-db's copy of this block carries `text-transform: capitalize` and keeps
+   it, because its facet values are lowercase enum names out of a database —
+   "weapon", "armor" — and something has to case them for display. That is a
+   fact about game-db's DATA, not about filter chips, and it does not come up
+   here: videogaming.top's labels are already written as prose, and capitalize
+   turned "Any depth" into "Any Depth", "10 or more" into "10 Or More" and
+   "A to Z" into "A To Z" the moment this page rendered.
+
+   A shared component does not get to decide the case of a consumer's copy.
+   Casing stays with whoever owns the strings. */
+.filter-chip.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+/* The count is what makes a filter honest: it says what clicking would give
+   you BEFORE you click, which is the thing a filter with no counts never
+   does. A chip reading "Automation 6" is a different control from one reading
+   "Automation" — the second can lead you to an empty result. */
+.filter-count {
+  color: var(--muted);
+  font-size: var(--step--2);
+  font-weight: 400;
+  margin-left: var(--space-1);
+}
+.filter-chip.is-active .filter-count { color: inherit; }
+
+/* ── Search results ─────────────────────────────────────────────────────
+   Promoted alongside the filters, which is the control that produces them. */
+.search-results { list-style: none; margin: 0; padding: 0; }
+.search-results li {
+  padding: var(--space-3) 0;
+  border-bottom: var(--rule) solid var(--border);
+}
+.search-name { font-family: var(--font-heading); font-size: var(--step-1); }
+.search-type {
+  color: var(--muted);
+  font-size: var(--step--2);
+  text-transform: uppercase;
+  letter-spacing: var(--track-eyebrow);
+  margin-left: var(--space-2);
+}
+.search-excerpt { color: var(--muted); margin: var(--space-1) 0 0; font-size: var(--step--1); }
+/* Not an accent highlight. A <mark> sits inside muted body text and an accent
+   fill behind it would make the matched fragment the loudest thing in a list
+   of fifty results. Neutral translucency reads on both a light and a dark
+   preset without either being named here. */
+.search-excerpt mark { background: rgba(127, 127, 127, 0.22); color: var(--text); }
+
 /* ── Tables ─────────────────────────────────────────────────────────────
    Promoted from game-db, where they had to live because this file had no table
    rules at all — which also meant a markdown table in a blog article rendered
