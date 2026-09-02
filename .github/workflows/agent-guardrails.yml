@@ -22,4 +22,4 @@ jobs:
     # `permissions:` block in fleet-ci's copy of the workflow.
     permissions:
       contents: read
-    uses: mpgray/fleet-ci/.github/workflows/guardrails-core.yml@8bc084ec8debc095ff4e9e0d755013a08c3862f9
+    uses: mpgray/fleet-ci/.github/workflows/guardrails-core.yml@bb255a677e1c62358447b02f318a8e90bd257da7
