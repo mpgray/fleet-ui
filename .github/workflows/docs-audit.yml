@@ -21,7 +21,16 @@ concurrency:
 
 jobs:
   agent:
-    uses: mpgray/fleet-ci/.github/workflows/docs-audit.yml@cb032c81513f56f714656c645585f066b4ea70b9
+    # A called workflow can never hold MORE than this job grants, and this
+    # repository's default GITHUB_TOKEN is `read`. Granting nothing made the
+    # called workflow's `write` a request to escalate, which GitHub refuses as
+    # `startup_failure` — with no log to say why. Keep this in step with the
+    # `permissions:` block in fleet-ci's copy of the workflow.
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    uses: mpgray/fleet-ci/.github/workflows/docs-audit.yml@8bc084ec8debc095ff4e9e0d755013a08c3862f9
     secrets: inherit
     with:
       # fleet-ui has no pyproject.toml and no uv.lock — it is templates and CSS
