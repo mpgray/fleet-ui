@@ -30,7 +30,7 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-    uses: mpgray/fleet-ci/.github/workflows/docs-audit.yml@8bc084ec8debc095ff4e9e0d755013a08c3862f9
+    uses: mpgray/fleet-ci/.github/workflows/docs-audit.yml@bb255a677e1c62358447b02f318a8e90bd257da7
     secrets: inherit
     with:
       # fleet-ui has no pyproject.toml and no uv.lock — it is templates and CSS
