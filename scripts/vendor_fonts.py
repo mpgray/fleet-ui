@@ -36,6 +36,26 @@ same faces already subset, already split per unicode range, with the
 are fetchable over plain HTTP from a CDN, so this stays a Python script in a
 repo with no Node toolchain.
 
+WHY THE RANGES ARE FETCHED TOO. Fontsource's per-subset stylesheets
+(`latin.css`, `latin-ext.css`) carry no `unicode-range` — they are built to be
+used ONE AT A TIME. This script concatenates them, so without a range two
+`@font-face` rules declare the same family, weight and style, and a browser has
+no way to know which file holds which characters until it has fetched them.
+
+The text still renders: font matching falls through to the next face in the
+same family, so latin-ext is tried, misses every ASCII letter, and latin is used.
+What it costs is the download. Measured on a page of pure ASCII, the rangeless
+build fetches BOTH spectral-latin-ext-400 and spectral-latin-400; the stamped
+build fetches only latin. That is roughly double the font bytes on every page,
+for a file with no glyph the page can use — and it is fetched first, so
+`font-display: swap` holds the fallback face on screen longer than it needs to.
+
+Which is exactly the saving the docstring above claims for splitting subsets:
+"a reader pulls the same latin file whether four files were vendored for a
+family or forty" is only true once the ranges are there to be pulled by. The
+package's own `index.css` publishes the range per subset, so it is fetched and
+each block is stamped with the one it needs.
+
 WHY EVERY WEIGHT AND EVERY SUBSET. Disk is paid once; page weight is not paid at
 all. The files are split per unicode range, so a browser downloads only the
 subsets it actually renders — a reader pulls the same latin file whether four
@@ -142,6 +162,36 @@ def fetch_licence(package: str, version: str, family_dir: pathlib.Path) -> str:
         f'the notice to accompany them — not vendored without it.')
 
 
+# A subset's range lives only in the package's combined `index.css`. The
+# per-subset files this script concatenates do not carry one, and the file name
+# is the only thing tying a rule back to its subset.
+_INDEX_FILE = r'{package}-(.+)-\d+-(?:normal|italic)\.woff2'
+_RANGE = re.compile(r'unicode-range:\s*([^;]+);')
+
+
+def subset_ranges(package: str, version: str) -> dict[str, str]:
+    """{subset: unicode-range} for one family, read off its own index.css.
+
+    Taken from the package rather than hardcoded here: the ranges are Google's
+    and they do change (U+1C80-1C8A joined cyrillic-ext in 2024). A constant in
+    this file would drift silently, and drift in a `unicode-range` shows up as
+    one accented character in the wrong face — the kind of thing nobody reports.
+    """
+    css = _get(f'{CDN}/@fontsource/{package}@{version}/index.css').decode()
+    name = re.compile(_INDEX_FILE.format(package=re.escape(package)))
+    ranges: dict[str, str] = {}
+    for block in css.split('@font-face'):
+        found, rng = name.search(block), _RANGE.search(block)
+        if found and rng:
+            ranges.setdefault(found.group(1), rng.group(1).strip())
+    if not ranges:
+        raise SystemExit(
+            f'@fontsource/{package}@{version} published no unicode-range in its '
+            f'index.css. Vendoring the subsets without one makes every reader '
+            f'download all of them on every page.')
+    return ranges
+
+
 def vendor_family(family: str, out_root: pathlib.Path) -> tuple[str, int]:
     """Download one family's CSS and woff2 files. Returns (version, file count).
 
@@ -154,6 +204,7 @@ def vendor_family(family: str, out_root: pathlib.Path) -> tuple[str, int]:
     version = latest_version(package)
     family_dir = out_root / package
     family_dir.mkdir(parents=True, exist_ok=True)
+    ranges = subset_ranges(package, version)
 
     blocks, files = [], 0
     for subset in SUBSETS:
@@ -172,6 +223,18 @@ def vendor_family(family: str, out_root: pathlib.Path) -> tuple[str, int]:
         # Drop the woff fallback from each src, and flatten the path.
         css = re.sub(r",\s*url\([^)]*\.woff\)\s*format\('woff'\)", '', css)
         css = _SRC_URL.sub(lambda m: f'url({m.group(1).split("/")[-1]})', css)
+        # Stamp every rule with its subset's range. Without it the blocks are
+        # indistinguishable on (family, weight, style) and every reader pays for
+        # every subset — see WHY THE RANGES ARE FETCHED TOO at the top.
+        rng = ranges.get(subset)
+        if rng is None:
+            raise SystemExit(
+                f'@fontsource/{package}@{version} ships a {subset}.css but names '
+                f'no unicode-range for "{subset}" in its index.css. Emitting the '
+                f'block anyway would make every reader download this subset on '
+                f'every page whether or not a character in it appears.')
+        css = re.sub(r'(\n\s*src:[^;]+;)',
+                     lambda m, r=rng: f'{m.group(1)}\n  unicode-range: {r};', css)
         blocks.append(f'/* --- {subset} --- */\n{css.strip()}')
 
     if not files:
@@ -230,6 +293,24 @@ def main() -> None:
         if broken:
             problems.append('font references that do not resolve:\n      '
                             + '\n      '.join(broken[:10]))
+
+        # A quieter failure than the one above, and the reason it needs a check
+        # at all: nothing breaks. Every face resolves, every file is present,
+        # the page renders correctly — and each reader downloads a subset file
+        # holding no character the page uses, because without a range the
+        # browser cannot tell the subsets apart. A rule without a range is only
+        # safe when it is the only rule for its family, which is never true
+        # here: this script always concatenates at least two subsets.
+        rangeless = []
+        for index in sorted(fonts_dir.glob('*/index.css')):
+            faces = index.read_text().split('@font-face')[1:]
+            bare = sum(1 for block in faces if 'unicode-range' not in block)
+            if bare:
+                rangeless.append(f'{index.parent.name}: {bare} of {len(faces)} '
+                                 f'@font-face rules carry no unicode-range')
+        if rangeless:
+            problems.append('subsets that will collide and fall back:\n      '
+                            + '\n      '.join(rangeless))
 
         # Nothing may reach Google any more. The faces are vendored precisely so
         # readers' browsers stop calling a third party, and one preset carrying
