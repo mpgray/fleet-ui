@@ -259,12 +259,19 @@ summary:focus-visible,
    cutting off the thing it exists to show. A fixed square, `contain`, and a
    surface fill behind it gives the round shape with nothing lost.
 
+   The mark uses the header's existing vertical padding too: its box is one
+   space-2 taller above and below, balanced by negative margins. Its outer
+   flex size therefore remains 2.6rem, so enlarging the mark cannot make the
+   header taller. This is deliberately shared rather than a theme flourish:
+   every consumer gets the same full-height brand treatment.
+
    `terminal` overrides this back to 0 in its own preset file. That preset's
    whole argument is that nothing on the page is rounded, and a hard 50% here
    would overrule it. */
 .site-logo {
-  height: 2.6rem;
-  width: 2.6rem;
+  height: calc(2.6rem + (var(--space-2) * 2));
+  width: calc(2.6rem + (var(--space-2) * 2));
+  margin-block: calc(var(--space-2) * -1);
   flex-shrink: 0;
   object-fit: contain;
   background: var(--surface);
