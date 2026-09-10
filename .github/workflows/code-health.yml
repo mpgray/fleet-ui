@@ -26,7 +26,7 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-    uses: mpgray/fleet-ci/.github/workflows/code-health.yml@bb255a677e1c62358447b02f318a8e90bd257da7
+    uses: mpgray/fleet-ci/.github/workflows/code-health.yml@60b3f38d421f166efc23dbecf23c853c36417820
     secrets: inherit
     with:
       enable_fix: false
