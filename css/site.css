@@ -238,6 +238,11 @@ summary:focus-visible,
   border-bottom: var(--rule-accent) solid var(--accent);
   box-shadow: var(--elev-1);
 }
+/* The global focus ring uses the page accent. In this band, use the foreground
+   that is contrast-checked against the header instead. */
+.site-header a:focus-visible,
+.site-header button:focus-visible,
+.site-header input:focus-visible { outline-color: var(--header-text); }
 .header-inner {
   display: flex;
   flex-wrap: wrap;
@@ -404,7 +409,7 @@ summary:focus-visible,
 }
 /* The checkbox is invisible, so its focus ring has to be drawn on the label. */
 .nav-checkbox:focus-visible + .nav-toggle {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--header-text);
   outline-offset: 2px;
 }
 
@@ -505,7 +510,10 @@ summary:focus-visible,
     font-size: var(--step-0);
     justify-content: space-between;
   }
-  .fleet-menu-state:checked ~ .fleet-sub-summary { background: none; color: var(--accent); }
+  .fleet-menu-state:checked ~ .fleet-sub-summary {
+    background: none;
+    color: var(--header-text);
+  }
   .fleet-menu-state:checked ~ .fleet-sub-scrim { display: none; }
   .fleet-menu-state:checked ~ .fleet-sub-panel {
     position: static;
@@ -523,11 +531,15 @@ summary:focus-visible,
    way across, not as the most important thing in the header. */
 .site-nav .fleet-link,
 .header-actions .fleet-link {
-  color: var(--accent);
+  /* The accent is measured against the page, not the header. Several light
+     presets use a dark accent that nearly disappears on their dark header,
+     even though both tokens pass their own contrast checks. The header's
+     foreground token is the one guaranteed to be readable here. */
+  color: var(--header-text);
   text-decoration: none;
   font-size: var(--step--1);
   padding: var(--space-1) var(--space-3);
-  border: var(--rule) solid var(--accent);
+  border: var(--rule) solid currentColor;
   border-radius: var(--r-pill);
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
@@ -568,8 +580,8 @@ summary:focus-visible,
   gap: var(--space-2);
   padding: var(--space-1) var(--space-3);
   font-size: var(--step--1);
-  color: var(--accent);
-  border: var(--rule) solid var(--accent);
+  color: var(--header-text);
+  border: var(--rule) solid currentColor;
   border-radius: var(--r-pill);
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
@@ -580,7 +592,7 @@ summary:focus-visible,
 }
 /* The radio is invisible, so its focus ring is drawn on the label. */
 .fleet-menu-state:focus-visible ~ .fleet-sub-summary {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--header-text);
   outline-offset: 2px;
 }
 
@@ -809,11 +821,32 @@ summary:focus-visible,
 }
 
 @media (max-width: 720px) {
-  /* Still side by side on a phone, just narrower. Stacking it put a
-     full-width image back above the headline, which is the thing being
-     removed. */
-  .hero-link-media { grid-template-columns: 10rem minmax(0, 1fr); gap: var(--space-4); }
-  .hero-image { min-height: 7rem; }
+  /* The image and headline keep the first row. The category is already in the
+     navigation and every card below, so repeating it here spends the scarce
+     half-column on a label instead of the headline. The excerpt still earns
+     its place, but spans the full row below rather than becoming a tall,
+     two-word-wide column beside the image. */
+  .hero-link-media {
+    grid-template-columns: 8rem minmax(0, 1fr);
+    gap: var(--space-3) var(--space-4);
+  }
+  .hero-link-media .hero-text { display: contents; }
+  .hero-link-media .card-category { display: none; }
+  .hero-link-media .hero-title {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+  }
+  .hero-link-media .hero-excerpt {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .hero-image {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 8rem;
+  }
 }
 
 /* ── Home: content column + skim rail ───────────────────────────────────
