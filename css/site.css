@@ -293,6 +293,13 @@ summary:focus-visible,
 }
 .site-tagline { font-size: var(--step--1); color: var(--muted); line-height: var(--lh-snug); }
 
+/* The name can carry more of the header's hierarchy while the full two-row
+   desktop layout has room for it. Keep the compact mobile header at step-1:
+   long site names still have to share that row with the menu button. */
+@media (min-width: 821px) {
+  .site-title { font-size: var(--step-2); }
+}
+
 /* Row one, right: the companion sites and the search form, on one line with
    the brand. The companions sit before the search rather than after the
    categories because they are the other half of the product and the old header
