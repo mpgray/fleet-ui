@@ -1457,7 +1457,11 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
   gap: var(--space-3) var(--space-6);
   padding: var(--space-4) var(--space-5);
   font-size: var(--step--1);
-  color: var(--muted);
+  /* The footer sits on --header-bg, and --muted is a colour chosen and
+     contrast-checked against --bg and --surface only. On a dark header it
+     measured 2.2-3.0:1 on eight of toolbox's eighteen sites. --header-text
+     is the one text colour check_contrast.py proves against --header-bg. */
+  color: var(--header-text);
 }
 /* The brand end of the row takes the slack, so the links and the form sit
    against the right edge instead of floating in the middle of it. */
@@ -1468,16 +1472,18 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
    its own wrapped row, so it is not pushed by this. */
 .footer-preview-image { height: 4.5rem; width: auto; flex-shrink: 0; border-radius: var(--r-1); }
 .footer-inner nav { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
-.footer-inner a { color: var(--muted); text-decoration: none; }
-.footer-inner a:hover { color: var(--accent); }
+.footer-inner a { color: var(--header-text); text-decoration: none; }
+/* Underline rather than --accent on hover: the accent is checked against the
+   page, not the header band, and several presets' accents vanish on it. */
+.footer-inner a:hover { text-decoration: underline; text-underline-offset: .18em; }
 /* No rule above it. It is the same block, and a hairline across a footer four
    lines tall divides nothing. */
 .footer-bottom {
   padding: 0 var(--space-5) var(--space-4);
   font-size: var(--step--2);
-  color: var(--muted);
+  color: var(--header-text);
 }
-.footer-note { color: var(--muted); font-size: var(--step--1); max-width: 60ch; margin: 0; }
+.footer-note { color: var(--header-text); font-size: var(--step--1); max-width: 60ch; margin: 0; }
 
 /* ── Motion ─────────────────────────────────────────────────────────────
    Last, so it wins on specificity ties. Covers the presets too: `terminal`
