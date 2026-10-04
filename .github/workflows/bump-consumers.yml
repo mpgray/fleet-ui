@@ -19,7 +19,8 @@ name: Bump consumer pins
 #
 # Requires: FLEET_PIN_TOKEN — a fine-grained PAT with Contents: write and
 # Pull requests: write on mpgray/articles-ai, mpgray/game-db,
-# mpgray/toolbox and mpgray/videogaming — every repo in the matrix below.
+# mpgray/toolbox, mpgray/videogaming and mpgray/revenue — every repo in the
+# matrix below.
 # ADDING A CONSUMER MEANS WIDENING THAT PAT, and the failure if you forget is
 # quiet in the wrong direction: the job fails on one matrix leg while the other
 # three succeed, so the run is red but the fleet still looks mostly bumped. The
@@ -56,8 +57,11 @@ jobs:
       # CSS inline and has no vendor/fleet-ui; see the comment at the top of
       # ai-help/app/templates/base.html, which records that as an open decision
       # rather than an oversight. Adding it means settling that decision first.
+      #
+      # revenue joined on 2026-10-04, the day after its first commit. It
+      # vendors fleet-ui for the shop header and the uptime marker macro.
       matrix:
-        consumer: [articles-ai, game-db, toolbox, videogaming]
+        consumer: [articles-ai, game-db, toolbox, videogaming, revenue]
       fail-fast: false
 
     steps:
