@@ -1592,6 +1592,25 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
 .deadline-applies { margin: 0 0 var(--space-1); color: var(--muted); font-size: var(--step--1); }
 .deadline-summary { margin: 0 0 var(--space-1); }
 .deadline-source { margin: 0; font-size: var(--step--2); color: var(--muted); }
+/* Picking deadlines. Not every date on the page applies to every reader, so each
+   row carries a checkbox (name="d") inside the page's GET form and "Build my
+   calendar" submits the picks to /deadlines/calendar/, which answers with a
+   subscription URL carrying only those. Each row also links its own one-event
+   .ics. No script: a form and two links. */
+.deadline-pickable { grid-template-columns: auto 7.5rem 1fr; }
+.deadline-pick { display: flex; align-items: flex-start; padding-top: 0.2em; }
+.deadline-pick input { width: 1.15rem; height: 1.15rem; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.deadline-actions { margin: var(--space-1) 0 0; font-size: var(--step--2); }
+.deadline-actions .icon { width: 1em; height: 1em; vertical-align: -0.15em; }
+.deadlines-build {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4);
+  margin: var(--space-6) 0 0; padding-top: var(--space-4);
+  border-top: var(--rule) solid var(--border);
+}
+.deadlines-build-help { flex-basis: 100%; font-size: var(--step--2); color: var(--muted); margin: 0; }
+/* The outline variant of .btn: the secondary action beside a filled primary. */
+.btn-outline { background: transparent; color: var(--accent); border: var(--rule) solid var(--accent); }
+.btn-outline:hover, .btn-outline:focus-visible { filter: none; background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .deadlines-subscribe { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin-top: var(--space-4); }
 .deadlines-subscribe-primary {
   display: inline-flex; align-items: center; gap: 0.5em;
@@ -1625,46 +1644,59 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
 
 @media (max-width: 560px) {
   .deadline, .update { grid-template-columns: 1fr; }
+  .deadline-pickable { grid-template-columns: auto 1fr; }
+  .deadline-pickable .deadline-body { grid-column: 1 / -1; }
 }
 
-/* Hover text on prose links. articles-ai adds the target's title to internal
-   article links and the entity's name to companion links (render_html →
-   decorate_links); the browser draws those as the native tooltip. A TOOL link
-   also carries data-tool / data-summary and gets the tool card, a bit smaller,
-   drawn from those attributes with CSS alone — no script on the blogs. The
-   native tooltip is suppressed on tool links so the card is the one thing shown. */
-.entity-tool { position: relative; }
-.entity-tool::after {
-  content: attr(data-tool) "\A" attr(data-summary);
-  white-space: pre-line;
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + var(--space-2));
-  z-index: 20;
-  width: max-content;
-  max-width: 22rem;
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface);
-  color: var(--text);
+/* Hover cards on prose links. articles-ai adds the target's title to internal
+   article links (render_html → decorate_links); the browser draws that as the
+   native tooltip. A COMPANION entity link — a toolbox tool, a game-db creature
+   or item — carries the entity's card as a hidden span INSIDE the link
+   (.entity-hover-card: the same tool-card markup the article foot draws, in
+   spans because it sits in an <a>), shown under the cursor at a smaller size
+   with CSS alone: no script on the blogs. aria-hidden on the span, so a screen
+   reader hears the link text and not a second card. */
+.entity-hover { position: relative; }
+.entity-hover-card {
+  display: flex; gap: var(--space-3); align-items: flex-start;
+  position: absolute; left: 0; bottom: calc(100% + var(--space-2)); z-index: 20;
+  width: max-content; max-width: 20rem;
+  padding: var(--space-3);
+  background: var(--surface); color: var(--text);
   border: var(--rule) solid var(--border);
   border-left: calc(var(--rule) * 3) solid var(--accent);
   border-radius: calc(var(--radius) * 0.75);
   box-shadow: var(--elev-1);
-  font-size: var(--step--1);
-  line-height: var(--lh-snug);
-  font-weight: 400;
-  text-align: left;
+  font-size: var(--step--1); line-height: var(--lh-snug); font-weight: 400;
+  text-align: left; text-decoration: none;
   pointer-events: none;
-  opacity: 0;
-  transform: translateY(var(--space-1));
+  opacity: 0; transform: translateY(var(--space-1));
   transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
-.entity-tool::after { font-weight: 400; }
-.entity-tool:hover::after, .entity-tool:focus-visible::after { opacity: 1; transform: none; }
-/* First line of the card is the tool name, bold; done with the only tool CSS has
-   for a pseudo-element's text: the name comes first and ::first-line applies. */
-.entity-tool::after::first-line { font-weight: 700; }
-@media (hover: none) { .entity-tool::after { display: none; } }
+.entity-hover-card .tool-card-icon { width: 2rem; height: 2rem; }
+.entity-hover-card .tool-card-icon img { width: 1.5rem; height: 1.5rem; }
+.entity-hover-card .tool-card-title { font-size: var(--step-0); }
+.entity-hover-card .tool-card-summary, .entity-hover-card .card-category { font-size: var(--step--2); }
+.entity-hover:hover .entity-hover-card, .entity-hover:focus-visible .entity-hover-card { opacity: 1; transform: none; }
+@media (hover: none) { .entity-hover-card { display: none; } }
+
+/* A link that leaves the site. articles-ai gives every off-site link in a body,
+   a source line or a credit class="ext" and target="_blank": a reader following a
+   citation should not lose the article, and should be able to tell before the
+   click that the destination is somebody else's page. The marker is the
+   sprite's arrow-up-right, drawn as a mask so it takes the link's colour. */
+.ext::after {
+  content: "";
+  display: inline-block;
+  width: 0.7em; height: 0.7em;
+  margin-left: 0.2em;
+  vertical-align: 0.05em;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='7' y1='17' x2='17' y2='7'/%3E%3Cpolyline points='7 7 17 7 17 17'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='7' y1='17' x2='17' y2='7'/%3E%3Cpolyline points='7 7 17 7 17 17'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+/* A card that already draws its own arrow does not get a second one. */
+.tool-card.ext::after, .entity-hover-card .ext::after { content: none; }
 
 /* A deadline whose date has passed but is still inside the grace window. */
 .deadline-past .deadline-date { color: var(--muted); }
