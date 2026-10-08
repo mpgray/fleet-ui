@@ -1626,3 +1626,52 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
 @media (max-width: 560px) {
   .deadline, .update { grid-template-columns: 1fr; }
 }
+
+/* Hover text on prose links. articles-ai adds the target's title to internal
+   article links and the entity's name to companion links (render_html →
+   decorate_links); the browser draws those as the native tooltip. A TOOL link
+   also carries data-tool / data-summary and gets the tool card, a bit smaller,
+   drawn from those attributes with CSS alone — no script on the blogs. The
+   native tooltip is suppressed on tool links so the card is the one thing shown. */
+.entity-tool { position: relative; }
+.entity-tool::after {
+  content: attr(data-tool) "\A" attr(data-summary);
+  white-space: pre-line;
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + var(--space-2));
+  z-index: 20;
+  width: max-content;
+  max-width: 22rem;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  color: var(--text);
+  border: var(--rule) solid var(--border);
+  border-left: calc(var(--rule) * 3) solid var(--accent);
+  border-radius: calc(var(--radius) * 0.75);
+  box-shadow: var(--elev-1);
+  font-size: var(--step--1);
+  line-height: var(--lh-snug);
+  font-weight: 400;
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(var(--space-1));
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.entity-tool::after { font-weight: 400; }
+.entity-tool:hover::after, .entity-tool:focus-visible::after { opacity: 1; transform: none; }
+/* First line of the card is the tool name, bold; done with the only tool CSS has
+   for a pseudo-element's text: the name comes first and ::first-line applies. */
+.entity-tool::after::first-line { font-weight: 700; }
+@media (hover: none) { .entity-tool::after { display: none; } }
+
+/* A deadline whose date has passed but is still inside the grace window. */
+.deadline-past .deadline-date { color: var(--muted); }
+.deadline-passed {
+  font-size: var(--step--2);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: var(--track-eyebrow);
+  margin-left: var(--space-1);
+}
