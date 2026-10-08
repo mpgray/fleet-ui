@@ -58,6 +58,13 @@
   --space-7: 3rem;
   --space-8: 4.5rem;
 
+  /* How far anything that sticks or is jumped to must sit below the top of
+     the viewport to clear the sticky header. The header is two rows at desktop
+     widths (brand row 3.6rem + its padding, nav row ≈2.2rem) and CSS cannot
+     measure it, so this is the two-row height plus breathing room. Consumers
+     with a taller header override it. */
+  --header-clearance: 8rem;
+
   /* Radius — MULTIPLY the theme's radius, never add to it. The previous file
      used calc(var(--radius) + 4|6|8|10px) in nine places, which inverted the
      token: `terminal` asks for 0 and got 10px-rounded cards anyway, `valheim`
@@ -882,7 +889,10 @@ summary:focus-visible,
    rule starts flush against the top of the viewport again. */
 .home-aside {
   position: sticky;
-  top: var(--space-8);
+  /* Not --space-8: that is 4.5rem, and the sticky header above is ~7rem, so
+     the top of the rail — and whatever link was first in it — scrolled behind
+     the header on every site. The rail must clear the header to be a rail. */
+  top: var(--header-clearance);
   padding-left: var(--space-4);
   padding-top: var(--space-5);
   border-left: var(--rule-spine) solid var(--accent);
@@ -914,6 +924,13 @@ summary:focus-visible,
 }
 .aside-list a:hover { color: var(--accent); }
 .aside-meta { display: block; font-size: var(--step--2); color: var(--muted); margin-top: var(--space-1); }
+/* A line of links under a rail list ("All deadlines · Subscribe"). */
+.aside-links { margin: var(--space-3) 0 0; font-size: var(--step--1); }
+.aside-links a + a { margin-left: var(--space-1); }
+
+/* An in-page jump (#slug, a heading id, a footnote) lands under the sticky
+   header unless the target clears it. Every anchor target, once. */
+main :target { scroll-margin-top: var(--header-clearance); }
 
 @media (max-width: 980px) {
   .home-layout,
@@ -1499,4 +1516,113 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
     scroll-behavior: auto !important;
   }
   .card:hover .card-image { transform: none; }
+}
+
+/* ── Blog listing and article components ───────────────────────────────────
+   Shared by every blog site: listing heading rows with a feed link, collection
+   sequences, change notes, deadlines, updates, search results, tool cards on
+   an article. Tokens only, per the contract at the top of this file. These
+   moved here from articles-ai's article-identity.css, where they had been
+   parked to avoid a pin bump; structure belongs here. */
+
+/* Listing heading row: the h1 with a small feed link beside it, baseline-aligned,
+   so the link takes no vertical space of its own. */
+.listing-kicker {
+  margin: 0 0 var(--space-1);
+  color: var(--muted);
+  font-size: var(--step--2);
+  text-transform: uppercase;
+  letter-spacing: var(--track-eyebrow);
+}
+.listing-title-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); }
+.listing-title-row h1 { margin: 0; }
+.listing-feed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-size: var(--step--2);
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.listing-feed:hover, .listing-feed:focus-visible { color: var(--accent); text-decoration: underline; }
+.listing-feed .icon { width: 0.9em; height: 0.9em; }
+
+/* Collection membership: "Part n of m" with previous/next steps. */
+.article-series { margin: var(--space-3) 0; padding: var(--space-3); border-left: calc(var(--rule) * 3) solid var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); font-size: var(--step--1); }
+.article-series-title { margin: 0 0 var(--space-2); }
+.article-series-kicker { display: inline-block; margin-right: var(--space-2); font-weight: 700; text-transform: uppercase; letter-spacing: var(--track-eyebrow); font-size: var(--step--2); color: var(--accent); }
+.article-series-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); }
+.article-series-dir { display: block; color: var(--muted); font-size: var(--step--2); text-transform: uppercase; letter-spacing: var(--track-eyebrow); }
+
+/* Collection hub page: numbered cards in the curated order. */
+.collection-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.collection-item { position: relative; padding-left: calc(var(--space-6) + var(--space-2)); }
+.collection-part {
+  position: absolute; left: 0; top: 0;
+  width: var(--space-6); height: var(--space-6);
+  display: grid; place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--accent); color: var(--accent-contrast);
+  font-weight: 700; font-size: var(--step--1);
+}
+.collection-intro { max-width: 60ch; }
+
+/* "What changed": reader-facing change notes under an article. */
+.article-changes { margin: var(--space-6) 0 var(--space-2); padding-top: var(--space-3); border-top: var(--rule) solid var(--border); }
+.article-changes-heading { font-size: var(--step--1); text-transform: uppercase; letter-spacing: var(--track-eyebrow); color: var(--muted); margin: 0 0 var(--space-2); }
+.article-changes-list { list-style: none; margin: 0; padding: 0; font-size: var(--step--1); }
+.article-changes-list li { margin: 0 0 var(--space-2); }
+.article-changes-list time { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Search results: title, matched passage, meta. */
+.search-results { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.search-result-title { font-size: var(--step-1); font-weight: 700; }
+.search-result-snippet { margin: var(--space-1) 0; color: var(--text); }
+.search-result-snippet mark { background: color-mix(in srgb, var(--accent) 22%, transparent); color: inherit; padding: 0 0.1em; }
+.search-result-meta { margin: 0; color: var(--muted); font-size: var(--step--1); }
+
+/* Deadlines page, its subscribe action, and the "Coming up" card on articles. */
+.deadline-month { margin: var(--space-6) 0; }
+.deadline-month-heading { font-size: var(--step-1); color: var(--muted); margin: 0 0 var(--space-3); }
+.deadline-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.deadline { display: grid; grid-template-columns: 7.5rem 1fr; gap: var(--space-3); align-items: start; }
+.deadline-date { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
+.deadline-title { font-size: var(--step-0); margin: 0 0 var(--space-1); }
+.deadline-applies { margin: 0 0 var(--space-1); color: var(--muted); font-size: var(--step--1); }
+.deadline-summary { margin: 0 0 var(--space-1); }
+.deadline-source { margin: 0; font-size: var(--step--2); color: var(--muted); }
+.deadlines-subscribe { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin-top: var(--space-4); }
+.deadlines-subscribe-primary {
+  display: inline-flex; align-items: center; gap: 0.5em;
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--step-0); font-weight: 700;
+  background: var(--accent); color: var(--accent-contrast);
+  border-radius: var(--r-pill); text-decoration: none;
+}
+.deadlines-subscribe-primary:hover, .deadlines-subscribe-primary:focus-visible { filter: brightness(1.08); text-decoration: none; }
+.deadlines-subscribe-primary .icon { width: 1.25em; height: 1.25em; }
+.deadlines-subscribe-alt { font-size: var(--step--1); }
+.deadlines-subscribe-help { flex-basis: 100%; font-size: var(--step--2); color: var(--muted); }
+.deadlines-subscribe-help code { font-size: inherit; }
+.article-deadlines { margin: var(--space-6) 0 var(--space-2); padding: var(--space-3); border-left: calc(var(--rule) * 3) solid var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); font-size: var(--step--1); }
+.article-deadlines-heading { font-size: var(--step--2); text-transform: uppercase; letter-spacing: var(--track-eyebrow); color: var(--accent); margin: 0 0 var(--space-2); }
+.article-deadlines-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.article-deadlines-list time { display: inline-block; min-width: 7rem; font-variant-numeric: tabular-nums; color: var(--muted); }
+.article-deadlines-more { margin: var(--space-2) 0 0; font-size: var(--step--2); color: var(--muted); }
+
+/* "Try it with your numbers": the companion tool an article is about. */
+.article-tools { margin: var(--space-6) 0 var(--space-2); }
+.article-tools-heading { font-size: var(--step--2); text-transform: uppercase; letter-spacing: var(--track-eyebrow); color: var(--muted); margin: 0 0 var(--space-2); }
+.article-tools .tool-cards { display: grid; gap: var(--space-3); }
+
+/* /updates/: corrected or updated articles with their reader notes. */
+.updates-list { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-4); }
+.update { display: grid; grid-template-columns: 7.5rem 1fr; gap: var(--space-3); align-items: start; }
+.update-date { color: var(--muted); font-variant-numeric: tabular-nums; font-size: var(--step--1); }
+.update-title { font-weight: 700; }
+.update-note { margin: var(--space-1) 0 0; }
+
+@media (max-width: 560px) {
+  .deadline, .update { grid-template-columns: 1fr; }
 }
