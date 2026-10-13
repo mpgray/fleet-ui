@@ -85,7 +85,12 @@ jobs:
           repository: mpgray/${{ matrix.consumer }}
           token: ${{ secrets.FLEET_PIN_TOKEN }}
           path: consumer
-          submodules: recursive
+          # No submodules. fleet-ui is private, and the pin is a gitlink in the
+          # consumer's index — moving it needs the SHA, not the files. Checking
+          # vendor/fleet-ui out here made FLEET_PIN_TOKEN need read access to
+          # fleet-ui as well as write access to every consumer; the commit
+          # list below comes from the fleet-ui checkout above, which this
+          # repository's own GITHUB_TOKEN can always read.
           fetch-depth: 0
 
       - name: Move the pin
@@ -94,7 +99,7 @@ jobs:
         run: |
           set -euo pipefail
           NEW="$(git -C ../fleet-ui rev-parse HEAD)"
-          OLD="$(git -C vendor/fleet-ui rev-parse HEAD)"
+          OLD="$(git rev-parse HEAD:vendor/fleet-ui)"
 
           if [ "$OLD" = "$NEW" ]; then
             echo "already pinned to ${NEW:0:12}"
@@ -102,8 +107,10 @@ jobs:
             exit 0
           fi
 
-          git -C vendor/fleet-ui fetch --quiet origin
-          git -C vendor/fleet-ui checkout --quiet "$NEW"
+          # Write the new gitlink straight into the index. The commit below
+          # picks it up; `git add vendor/fleet-ui` on the empty, uninitialised
+          # submodule directory leaves it as staged here.
+          git update-index --cacheinfo "160000,$NEW,vendor/fleet-ui"
 
           # Built into a variable FIRST, then written in one go. The previous
           # version streamed `log<<EOF`, the git output and `EOF` straight into
