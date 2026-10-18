@@ -1698,6 +1698,27 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
 /* A card that already draws its own arrow does not get a second one. */
 .tool-card.ext::after, .entity-hover-card .ext::after { content: none; }
 
+/* Citations. articles-ai numbers every off-site link in an article body as a
+   source: the link text takes class="cite", a superscript [n] follows it and
+   jumps to the numbered Sources list after the body, and that entry jumps back.
+   Before this a citation looked exactly like any other link, so a reader could
+   not tell "this sentence is sourced" from "here is a related page".
+   --muted, not a new token: adding a token breaks every consumer, and --muted
+   is already held to AA on both backgrounds by scripts/check_contrast.py. The
+   marker keeps --accent so it still reads as clickable. */
+.article-body a.cite { color: var(--muted); text-decoration: underline dashed; text-underline-offset: .18em; }
+.article-body a.cite:hover { color: var(--accent); }
+.cite-ref { font-size: .7em; line-height: 0; vertical-align: super; margin-left: .1em; font-variant-numeric: tabular-nums; }
+.cite-ref a { text-decoration: none; }
+.cite-ref a:hover, .cite-ref a:focus-visible { text-decoration: underline; }
+.article-sources { margin: var(--space-6) 0 var(--space-2); padding-top: var(--space-3); border-top: var(--rule) solid var(--border); }
+.article-sources-heading { font-size: var(--step--1); text-transform: uppercase; letter-spacing: var(--track-eyebrow); color: var(--muted); margin: 0 0 var(--space-2); }
+.article-sources-list { margin: 0; padding-left: 2em; font-size: var(--step--1); }
+.article-sources-list li { margin: 0 0 var(--space-2); overflow-wrap: anywhere; }
+.article-sources-list li:target { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.source-site { color: var(--muted); }
+.source-back { margin-left: .3em; text-decoration: none; }
+
 /* A deadline whose date has passed but is still inside the grace window. */
 .deadline-past .deadline-date { color: var(--muted); }
 .deadline-passed {
