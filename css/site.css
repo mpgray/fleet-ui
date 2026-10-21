@@ -107,14 +107,15 @@
   --ease: cubic-bezier(0.2, 0, 0.1, 1);
   --dur: 0.18s;
 
-  /* Header-scoped surface, border and muted-text tokens derived from the
-     proved --header-text / --header-bg pair. Thirteen presets pair a light
-     page with a dark header, so page-scoped --muted and --border drop below
-     legible contrast inside the header band. */
+  /* Header-scoped surface, border, accent and muted-text tokens derived from
+     the proved --header-text / --header-bg pair. Thirteen presets pair a light
+     page with a dark header, so page-scoped --muted, --border and --accent drop
+     below legible contrast inside the header band. */
   --header-muted: color-mix(in srgb, var(--header-text) 74%, var(--header-bg));
   --header-border: color-mix(in srgb, var(--header-text) 16%, transparent);
   --header-surface: color-mix(in srgb, var(--header-text) 7%, transparent);
   --header-surface-strong: color-mix(in srgb, var(--header-text) 14%, transparent);
+  --header-accent: color-mix(in srgb, var(--accent) 45%, var(--header-text));
 }
 
 * { box-sizing: border-box; }
@@ -301,7 +302,7 @@ summary:focus-visible,
   transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
 .site-brand:hover .site-logo {
-  box-shadow: 0 0 0 var(--rule-accent) var(--accent);
+  box-shadow: 0 0 0 var(--rule-accent) var(--header-accent);
 }
 .site-title {
   font-family: var(--font-heading);
@@ -362,11 +363,12 @@ summary:focus-visible,
   color: var(--header-text);
   background: var(--header-surface);
 }
-.site-nav > a[aria-current="page"],
-.site-nav > a.is-active {
+.site-header .site-nav > a[aria-current="page"],
+.site-header .site-nav > a.is-active {
   color: var(--header-text);
   font-weight: 700;
   background: var(--header-surface-strong);
+  box-shadow: none;
 }
 
 .search-form { display: flex; align-items: center; gap: var(--space-1); }
@@ -393,8 +395,8 @@ summary:focus-visible,
 }
 .site-header .search-form:focus-within {
   background: var(--header-surface-strong);
-  border-color: color-mix(in srgb, var(--accent) 70%, var(--header-text));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 70%, var(--header-text));
+  border-color: var(--header-accent);
+  box-shadow: 0 0 0 1px var(--header-accent);
 }
 .site-header .search-form .input {
   padding: 0.28rem var(--space-3);
@@ -418,6 +420,7 @@ summary:focus-visible,
   padding: 0.3rem 0.65rem;
   font-size: var(--step--2);
   min-height: 1.75rem;
+  border: var(--rule) solid color-mix(in srgb, var(--header-text) 24%, transparent);
   border-radius: var(--r-pill);
   flex-shrink: 0;
 }
@@ -496,9 +499,9 @@ summary:focus-visible,
     border-radius: 0;
     border-bottom: 3px solid transparent;
   }
-  .site-nav > a[aria-current="page"],
-  .site-nav > a.is-active {
-    border-bottom-color: var(--accent);
+  .site-header .site-nav > a[aria-current="page"],
+  .site-header .site-nav > a.is-active {
+    border-bottom-color: var(--header-accent);
     box-shadow: none;
   }
 }
@@ -551,7 +554,7 @@ summary:focus-visible,
 .nav-checkbox:checked + .nav-toggle {
   background: var(--accent);
   color: var(--accent-contrast);
-  border-color: var(--accent);
+  border-color: var(--header-accent);
 }
 /* The checkbox is invisible, so its focus ring has to be drawn on the label. */
 .nav-checkbox:focus-visible + .nav-toggle {
@@ -640,7 +643,7 @@ summary:focus-visible,
   .nav-checkbox:checked ~ .site-nav > a[aria-current="page"],
   .nav-checkbox:checked ~ .site-nav > a.is-active {
     background: var(--header-surface-strong);
-    border-left: var(--rule-accent) solid var(--accent);
+    border-left: var(--rule-accent) solid var(--header-accent);
     border-radius: 0 var(--r-1) var(--r-1) 0;
     padding-left: var(--space-3);
   }
@@ -738,7 +741,7 @@ summary:focus-visible,
 .fleet-sub-summary:hover,
 .fleet-menu-state:checked ~ .fleet-sub-summary {
   background: var(--accent);
-  border-color: var(--accent);
+  border-color: var(--header-accent);
   color: var(--accent-contrast);
 }
 
@@ -809,7 +812,7 @@ summary:focus-visible,
   padding: var(--space-2);
   background: var(--header-bg);
   border: var(--rule) solid var(--header-border);
-  border-top: var(--rule-accent) solid var(--accent);
+  border-top: var(--rule-accent) solid var(--header-accent);
   border-radius: var(--r-2);
   box-shadow: var(--elev-1);
 }
