@@ -22,7 +22,8 @@
   {%- set here = (current_url or '').rstrip('/') -%}
   {%- for link in links or [] -%}
     {%- if (link.url or '').rstrip('/') != here -%}
-      <a class="fleet-link" href="{{ link.url }}">{{ link.label }}<span aria-hidden="true"> &rarr;</span></a>
+      {%- set label = 'Home' if link.kind == 'blog' else link.label -%}
+      <a class="fleet-link" href="{{ link.url }}">{{ label }}<span aria-hidden="true"> &rarr;</span></a>
     {%- endif -%}
   {%- endfor -%}
 {% endmacro %}
@@ -126,20 +127,21 @@
   either. Both need script; neither is what anybody complained about.
 #}
 {% macro _fleet_item(link, groups, menu_id) %}
+  {%- set label = 'Home' if link.kind == 'blog' else link.label -%}
   {%- if groups -%}
     <div class="fleet-sub">
       <input class="fleet-menu-state" type="radio" name="fleet-menu" id="{{ menu_id }}">
-      <label class="fleet-sub-summary" for="{{ menu_id }}">{{ link.label }}<span class="fleet-caret" aria-hidden="true"></span></label>
+      <label class="fleet-sub-summary" for="{{ menu_id }}">{{ label }}<span class="fleet-caret" aria-hidden="true"></span></label>
       <label class="fleet-sub-scrim" for="fleet-menu-none" aria-hidden="true"></label>
       <div class="fleet-sub-panel">
-        <a class="fleet-sub-home" href="{{ link.url }}">{{ link.label }} home<span aria-hidden="true"> &rarr;</span></a>
+        <a class="fleet-sub-home" href="{{ link.url }}">{{ label }} home<span aria-hidden="true"> &rarr;</span></a>
         {%- for group in groups -%}
           <a href="{{ group.url }}">{{ group.name }}</a>
         {%- endfor -%}
       </div>
     </div>
   {%- else -%}
-    <a class="fleet-link" href="{{ link.url }}">{{ link.label }}<span aria-hidden="true"> &rarr;</span></a>
+    <a class="fleet-link" href="{{ link.url }}">{{ label }}<span aria-hidden="true"> &rarr;</span></a>
   {%- endif -%}
 {% endmacro %}
 
