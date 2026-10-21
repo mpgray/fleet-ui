@@ -34,7 +34,6 @@ body {
 }
 
 .site-title { letter-spacing: 0.08em; text-transform: uppercase; }
-.site-tagline { color: #b8c4b6; }
 
 /* Cinzel is all-caps by design and needs air between the letters at heading
    sizes; the shared -0.02em display tracking is drawn for lowercase. */

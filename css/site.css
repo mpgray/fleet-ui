@@ -106,6 +106,15 @@
 
   --ease: cubic-bezier(0.2, 0, 0.1, 1);
   --dur: 0.18s;
+
+  /* Header-scoped surface, border and muted-text tokens derived from the
+     proved --header-text / --header-bg pair. Thirteen presets pair a light
+     page with a dark header, so page-scoped --muted and --border drop below
+     legible contrast inside the header band. */
+  --header-muted: color-mix(in srgb, var(--header-text) 74%, var(--header-bg));
+  --header-border: color-mix(in srgb, var(--header-text) 16%, transparent);
+  --header-surface: color-mix(in srgb, var(--header-text) 7%, transparent);
+  --header-surface-strong: color-mix(in srgb, var(--header-text) 14%, transparent);
 }
 
 * { box-sizing: border-box; }
@@ -254,104 +263,112 @@ summary:focus-visible,
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  row-gap: var(--space-1);
+  row-gap: 0;
   column-gap: var(--space-4);
-  padding: var(--space-2) var(--space-5);
+  padding: var(--space-3) var(--space-5);
 }
-.site-brand { text-decoration: none; display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.site-brand {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
 /* Name then tagline, the way it always was. A previous version flipped these
    with column-reverse, on a misreading of "the tagline should be on top" —
    which was about the line under the hero moving to the top of the PAGE, not
    about the header brand putting its subtitle above its own name. Putting a
    subtitle above the thing it is subtitling has no reading that helps. */
-.site-brand-text { display: flex; flex-direction: column; min-width: 0; }
-/* A circle that LETTERBOXES rather than crops. `border-radius: 50%` on an
-   auto-width image is an ellipse, and `object-fit: cover` inside a square box
-   eats the ends of a wordmark — both of which are how a rounded logo ends up
-   cutting off the thing it exists to show. A fixed square, `contain`, and a
-   surface fill behind it gives the round shape with nothing lost.
-
-   The mark uses the header's existing vertical padding too: its box is one
-   space-2 taller above and below, balanced by negative margins. Its outer
-   flex size therefore remains 2.6rem, so enlarging the mark cannot make the
-   header taller. This is deliberately shared rather than a theme flourish:
-   every consumer gets the same full-height brand treatment.
-
-   `terminal` overrides this back to 0 in its own preset file. That preset's
-   whole argument is that nothing on the page is rounded, and a hard 50% here
-   would overrule it. */
+.site-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+  min-width: 0;
+}
+/* Squircle emblem at mobile width, expanded to a full-height 4.35rem badge in
+   the two-column desktop bento grid below. `terminal` overrides --r-2 to 0 in
+   its own preset file so square-corner themes stay square everywhere. */
 .site-logo {
-  height: calc(2.6rem + (var(--space-2) * 2));
-  width: calc(2.6rem + (var(--space-2) * 2));
-  margin-block: calc(var(--space-2) * -1);
+  height: 2.75rem;
+  width: 2.75rem;
+  margin-block: 0;
   flex-shrink: 0;
   object-fit: contain;
   background: var(--surface);
   padding: 2px;
-  border-radius: var(--r-circle);
+  border-radius: var(--r-2);
+  box-shadow: 0 0 0 var(--rule) var(--header-border);
+  transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.site-brand:hover .site-logo {
+  box-shadow: 0 0 0 var(--rule-accent) var(--accent);
 }
 .site-title {
   font-family: var(--font-heading);
   font-size: var(--step-1);
   font-weight: 700;
   color: var(--header-text);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-display);
+}
+.site-tagline {
+  font-size: var(--step--1);
+  color: var(--header-muted);
   line-height: var(--lh-snug);
-  letter-spacing: 0;
-}
-.site-tagline { font-size: var(--step--1); color: var(--muted); line-height: var(--lh-snug); }
-
-/* The name can carry more of the header's hierarchy while the full two-row
-   desktop layout has room for it. Keep the compact mobile header at step-1:
-   long site names still have to share that row with the menu button. */
-@media (min-width: 821px) {
-  .site-title { font-size: var(--step-2); }
 }
 
-/* Row one, right: the companion sites and the search form, on one line with
-   the brand. The companions sit before the search rather than after the
-   categories because they are the other half of the product and the old header
-   ranked them last — after every category and every static page, at the end of
-   a wrapping row, which is where a link goes to be ignored. */
+/* Row one, right: the companion sites and the search form, grouped inside a
+   unified translucent command pod on desktop. */
 .header-actions {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   min-width: 0;
 }
-.fleet-links { display: flex; align-items: center; gap: var(--space-2); }
+.fleet-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
 /* Old markup, kept working until every consumer moves: the search form as a
-   direct child of .header-inner rather than inside .header-actions. `.site-nav`
-   used to carry the `margin-left: auto` that pushed everything right, and it is
-   a full-width second row now, so without this the form lands against the
-   brand on any repo that has taken the pin bump but not the template. */
+   direct child of .header-inner rather than inside .header-actions. */
 .header-inner > .search-form { margin-left: auto; }
 
-/* Row two: the site's own navigation, centred, on its own band. Full-width via
-   flex-basis rather than a grid row, so it participates in the same wrap the
-   header has always used and a consumer that renders no nav costs nothing. */
+/* Row two: the site's own navigation on its own band. */
 .site-nav {
   flex-basis: 100%;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   row-gap: var(--space-1);
   column-gap: var(--space-1);
   padding-top: var(--space-1);
 }
-.site-nav a {
-  color: var(--header-text);
+.site-nav > a {
+  position: relative;
+  color: var(--header-muted);
   text-decoration: none;
   font-size: var(--step--1);
+  font-weight: 500;
   padding: var(--space-1) var(--space-3);
-  border-radius: var(--r-pill);
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  border-radius: var(--r-1);
+  transition: background-color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease),
+              color var(--dur) var(--ease);
 }
-.site-nav a:hover {
-  color: var(--accent-contrast);
-  background: var(--accent);
+.site-nav > a:hover {
+  color: var(--header-text);
+  background: var(--header-surface);
 }
+.site-nav > a[aria-current="page"],
+.site-nav > a.is-active {
+  color: var(--header-text);
+  font-weight: 700;
+  background: var(--header-surface-strong);
+}
+
 .search-form { display: flex; align-items: center; gap: var(--space-1); }
 .search-form .input {
   padding: var(--space-1) var(--space-3);
@@ -361,15 +378,130 @@ summary:focus-visible,
 }
 .search-form .btn { padding: var(--space-1) var(--space-3); }
 
-/* There used to be a rule here shrinking the field to its button between 821px
-   and 1000px, against a wrap I estimated at "around 780px of content" and never
-   measured. Row one is brand, companions and search — the categories moved to
-   row two in the same change — so there is a wide band of empty space to the
-   left of the field at exactly those widths, and it was collapsing a search box
-   to avoid a wrap that does not happen.
-   
-   If row one ever does run out of room, .header-inner wraps, which is a
-   degradation and not a break. */
+/* Integrated search capsule inside the header band. */
+.site-header .search-form {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: color-mix(in srgb, var(--header-bg) 68%, transparent);
+  border: var(--rule) solid var(--header-border);
+  border-radius: var(--r-pill);
+  transition: border-color var(--dur) var(--ease),
+              background-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease);
+}
+.site-header .search-form:focus-within {
+  background: var(--header-surface-strong);
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--header-text));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 70%, var(--header-text));
+}
+.site-header .search-form .input {
+  padding: 0.28rem var(--space-3);
+  font-size: var(--step--1);
+  width: 12.5rem;
+  background: transparent;
+  color: var(--header-text);
+  border: none;
+  border-radius: var(--r-pill);
+  transition: width var(--dur) var(--ease);
+}
+.site-header .search-form .input::placeholder {
+  color: var(--header-muted);
+  opacity: 1;
+}
+.site-header .search-form .input:focus-visible {
+  outline: none;
+  width: 15.5rem;
+}
+.site-header .search-form .btn {
+  padding: 0.3rem 0.65rem;
+  font-size: var(--step--2);
+  min-height: 1.75rem;
+  border-radius: var(--r-pill);
+  flex-shrink: 0;
+}
+
+/* Desktop 2-column Bento architecture:
+   Left column: full-height Brand Identity with expanded 4.35rem logo and vertical divider.
+   Right column: Top unified Command Pod bubble (Companions + Search) over
+   Bottom recessed category tab shelf with flush bottom-bar tabs. */
+@media (min-width: 821px) {
+  .header-inner {
+    display: grid;
+    grid-template-columns: minmax(15rem, 19.25rem) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: stretch;
+    column-gap: 0;
+    row-gap: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .site-brand {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    padding: 0.4rem var(--space-4) 0.4rem 0;
+    border-right: var(--rule) solid var(--header-border);
+    align-self: stretch;
+    gap: var(--space-3);
+  }
+  .site-logo {
+    height: 4.35rem;
+    width: 4.35rem;
+    border-radius: var(--r-2);
+    box-shadow: 0 0 0 var(--rule) var(--header-border), var(--elev-1);
+  }
+  .site-title {
+    font-size: var(--step-1);
+  }
+  .header-actions {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+    margin: 0.4rem 0 0.4rem var(--space-3);
+    padding: 0.2rem 0.26rem 0.2rem 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--header-surface);
+    border: var(--rule) solid var(--header-border);
+    border-radius: var(--r-pill);
+  }
+  .header-actions .fleet-links {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+  }
+  .site-nav {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 0;
+    padding: 0 var(--space-2) 0 var(--space-3);
+    border-top: var(--rule) solid var(--header-border);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 0.05rem;
+    background: color-mix(in srgb, var(--header-text) 6%, var(--header-bg));
+  }
+  .site-nav > a {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    font-size: 0.81rem;
+    padding: 0.48rem 0.48rem;
+    border: none;
+    border-radius: 0;
+    border-bottom: 3px solid transparent;
+  }
+  .site-nav > a[aria-current="page"],
+  .site-nav > a.is-active {
+    border-bottom-color: var(--accent);
+    box-shadow: none;
+  }
+}
 
 /* ── The hamburger ──────────────────────────────────────────────────────
    A checkbox, not a script. The previous version toggled a class from
@@ -396,9 +528,9 @@ summary:focus-visible,
   width: 2.4rem;
   height: 2.4rem;
   padding: 0;
-  background: transparent;
+  background: var(--header-surface);
   color: var(--header-text);
-  border: var(--rule) solid var(--border);
+  border: var(--rule) solid var(--header-border);
   border-radius: var(--r-2);
   cursor: pointer;
 }
@@ -464,15 +596,21 @@ summary:focus-visible,
   .nav-checkbox:checked ~ .header-actions,
   .nav-checkbox:checked ~ .search-form {
     order: 1;
-    padding-top: var(--space-2);
+    padding-top: var(--space-3);
   }
   .nav-checkbox:checked ~ .header-actions {
     flex-direction: column;
     align-items: stretch;
     gap: 0;
   }
-  .nav-checkbox:checked ~ .header-actions .search-form { order: 1; display: flex; }
+  .nav-checkbox:checked ~ .header-actions .search-form {
+    order: 1;
+    display: flex;
+    width: 100%;
+    background: var(--header-surface);
+  }
   .nav-checkbox:checked ~ .header-actions .search-form .input,
+  .nav-checkbox:checked ~ .header-actions .search-form .input:focus-visible,
   .nav-checkbox:checked ~ .search-form .input { flex: 1; width: auto; }
   .nav-checkbox:checked ~ .header-actions .fleet-links {
     order: 2;
@@ -488,23 +626,36 @@ summary:focus-visible,
     align-items: stretch;
     justify-content: flex-start;
     row-gap: 0;
+    border-top: var(--rule) solid var(--header-border);
     padding: var(--space-2) 0 var(--space-1);
     margin-top: var(--space-2);
   }
   .nav-checkbox:checked ~ .site-nav > a {
+    color: var(--header-text);
     padding: var(--space-3) var(--space-2);
     font-size: var(--step-0);
-    border-radius: var(--r-2);
+    border: none;
+    border-radius: var(--r-1);
+  }
+  .nav-checkbox:checked ~ .site-nav > a[aria-current="page"],
+  .nav-checkbox:checked ~ .site-nav > a.is-active {
+    background: var(--header-surface-strong);
+    border-left: var(--rule-accent) solid var(--accent);
+    border-radius: 0 var(--r-1) var(--r-1) 0;
+    padding-left: var(--space-3);
   }
   /* The cross-site links are outlined pills at desktop width; as full-width
      rows that outline reads as a text field, so it becomes a rule instead. */
   .nav-checkbox:checked ~ .site-nav .fleet-link,
   .nav-checkbox:checked ~ .header-actions .fleet-link {
+    background: none;
     border: none;
-    border-top: var(--rule) solid var(--border);
+    border-top: var(--rule) solid var(--header-border);
     border-radius: 0;
     padding: var(--space-3) var(--space-2);
     font-size: var(--step-0);
+    width: 100%;
+    justify-content: space-between;
   }
 
   /* A companion's submenu is a floating panel at desktop width and an inline
@@ -517,11 +668,13 @@ summary:focus-visible,
   .fleet-sub { width: 100%; }
   .fleet-sub-summary {
     display: flex;
+    background: none;
     border: none;
-    border-top: var(--rule) solid var(--border);
+    border-top: var(--rule) solid var(--header-border);
     border-radius: 0;
     padding: var(--space-3) var(--space-2);
     font-size: var(--step-0);
+    width: 100%;
     justify-content: space-between;
   }
   .fleet-menu-state:checked ~ .fleet-sub-summary {
@@ -537,6 +690,7 @@ summary:focus-visible,
     background: none;
     padding: 0 0 var(--space-2) var(--space-4);
   }
+  .fleet-more { margin-left: 0; }
 }
 
 /* ── Fleet cross-links (macros/fleet.html) ──────────────────────────────
@@ -544,22 +698,47 @@ summary:focus-visible,
    from the site's own nav. Outlined rather than louder: it should read as a
    way across, not as the most important thing in the header. */
 .site-nav .fleet-link,
-.header-actions .fleet-link {
+.header-actions .fleet-link,
+.fleet-sub-summary {
   /* The accent is measured against the page, not the header. Several light
      presets use a dark accent that nearly disappears on their dark header,
      even though both tokens pass their own contrast checks. The header's
      foreground token is the one guaranteed to be readable here. */
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   color: var(--header-text);
+  background: var(--header-surface);
   text-decoration: none;
-  font-size: var(--step--1);
-  padding: var(--space-1) var(--space-3);
-  border: var(--rule) solid currentColor;
+  font-size: var(--step--2);
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  line-height: 1.25;
+  padding: 0.34rem 0.7rem;
+  border: var(--rule) solid var(--header-border);
   border-radius: var(--r-pill);
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: background-color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease),
+              color var(--dur) var(--ease);
+}
+.fleet-sub-summary {
+  gap: var(--space-2);
+}
+@media (min-width: 821px) {
+  .header-actions .fleet-link,
+  .header-actions .fleet-sub-summary {
+    background: transparent;
+    border-color: transparent;
+    padding: 0.28rem 0.65rem;
+  }
 }
 .site-nav .fleet-link:hover,
-.header-actions .fleet-link:hover {
+.header-actions .fleet-link:hover,
+.fleet-sub-summary:hover,
+.fleet-menu-state:checked ~ .fleet-sub-summary {
   background: var(--accent);
+  border-color: var(--accent);
   color: var(--accent-contrast);
 }
 
@@ -587,23 +766,6 @@ summary:focus-visible,
   pointer-events: none;
 }
 .fleet-sub { position: relative; }
-.fleet-sub-summary {
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  font-size: var(--step--1);
-  color: var(--header-text);
-  border: var(--rule) solid currentColor;
-  border-radius: var(--r-pill);
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.fleet-sub-summary:hover,
-.fleet-menu-state:checked ~ .fleet-sub-summary {
-  background: var(--accent);
-  color: var(--accent-contrast);
-}
 /* The radio is invisible, so its focus ring is drawn on the label. */
 .fleet-menu-state:focus-visible ~ .fleet-sub-summary {
   outline: 2px solid var(--header-text);
@@ -641,15 +803,21 @@ summary:focus-visible,
   top: calc(100% + var(--space-2));
   left: 0;
   z-index: 40;
-  min-width: 12rem;
+  min-width: 13.5rem;
   flex-direction: column;
-  padding: var(--space-1);
+  gap: 2px;
+  padding: var(--space-2);
   background: var(--header-bg);
-  border: var(--rule) solid var(--border);
+  border: var(--rule) solid var(--header-border);
+  border-top: var(--rule-accent) solid var(--accent);
   border-radius: var(--r-2);
   box-shadow: var(--elev-1);
 }
 .fleet-sub-panel a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--r-1);
   color: var(--header-text);
@@ -658,18 +826,25 @@ summary:focus-visible,
   white-space: nowrap;
 }
 .fleet-sub-panel a:hover { background: var(--accent); color: var(--accent-contrast); }
-.fleet-sub-home { color: var(--accent); }
+.fleet-sub-home {
+  color: var(--header-text);
+  font-weight: 700;
+  background: var(--header-surface);
+}
 .fleet-sub-panel .fleet-sub-home + a {
   margin-top: var(--space-1);
-  border-top: var(--rule) solid var(--border);
-  padding-top: var(--space-3);
+  border-top: var(--rule) solid var(--header-border);
+  padding-top: var(--space-2);
 }
 
 /* "More" is a row-two control sitting among the site's own links, so it is
    outlined like a cross-site link — it leads off this hostname and should not
    be dressed as a category. */
-.fleet-more { margin-left: var(--space-2); }
-/* Anchored right: "More" is the last control on a centred row, so a panel
+.fleet-more {
+  margin-left: auto;
+  align-self: center;
+}
+/* Anchored right: "More" is the last control on the row, so a panel
    opening leftward is the one that stays on screen. */
 .fleet-more .fleet-menu-state:checked ~ .fleet-sub-panel { left: auto; right: 0; }
 
@@ -1383,6 +1558,21 @@ a.tag:hover, a.chip:hover { border-color: var(--accent); color: var(--accent); }
   cursor: pointer; text-decoration: none;
 }
 .btn:hover { filter: brightness(1.08); }
+/* A text action rather than a filled button, shared by game-db ("Clear" filter
+   controls) and toolbox ("Download backup" / "Restore backup"). */
+.btn-quiet {
+  appearance: none;
+  border: 0;
+  padding: var(--space-1) 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--step--1);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+.btn-quiet:hover { color: var(--text); }
 .form-banner {
   background: var(--surface);
   border: var(--rule) solid var(--border);
