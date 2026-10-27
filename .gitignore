@@ -6,3 +6,6 @@
 # path is silently refused, which cost the 2026-08-10 runs most of their turns.
 health.txt
 agent-log/
+
+__pycache__/
+.pytest_cache/
