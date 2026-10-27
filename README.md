@@ -22,6 +22,9 @@ css/fonts/<family>/       vendored woff2 faces + the @font-face CSS + LICENSE,
                           one directory per family. Generated — see below.
 scripts/check_contrast.py CI: every preset clears WCAG AA. Runs standalone.
 scripts/vendor_fonts.py   CI: syncs css/fonts/ to the families the presets name.
+python/fleet_contracts/   page contracts consumers run in their own pytest
+                          suites — structured_data.py (JSON-LD). Never imported
+                          by a running site.
 ```
 
 ## Typefaces
@@ -192,6 +195,37 @@ Rules for consumers:
    `articles-ai` admin dashboard compares pins across the fleet and raises a
    drift alarm when they diverge.
 3. **Bump deliberately.** A pin bump is a commit you can revert.
+
+## Page contracts
+
+Some rules are about the page a consumer renders, not the CSS it loads, and
+are still the same rule in every consumer. Those live in
+`python/fleet_contracts/` and run inside each consumer's own test suite,
+against HTML its own test client rendered — the only place the page exists.
+Standard library only, so a consumer adds nothing to its lockfile.
+
+**Structured Data Contract** (`structured_data.py`): JSON-LD that is complete
+and agrees with the visible page. Required fields per type; headline is the
+`<h1>`; `url` is the canonical; every date is a `<time datetime>` on the page;
+the image is shown; breadcrumbs and list entries are linked; a `Person` author
+is named and linked, and a persona (`personas=`) is never a `Person`; every
+number in the JSON-LD appears in the visible text. Read the module docstring
+for the full list.
+
+```python
+# tests/conftest.py
+sys.path.insert(0, str(REPO_ROOT / 'vendor' / 'fleet-ui' / 'python'))
+
+# a test
+from fleet_contracts.structured_data import assert_structured_data
+found = assert_structured_data(html, require={'Article', 'BreadcrumbList'},
+                               author='Organization', personas={'Marcus Webb'})
+assert found[0]['dateModified'] == article['last_revised_at']   # what only you know
+```
+
+The contract's own tests are `tests/test_structured_data.py`
+(`python -m pytest tests`, pytest only). A rule changed here reaches a consumer
+at its next pin bump, which is where it is judged against real pages.
 
 ## Provenance
 
