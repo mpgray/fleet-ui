@@ -1,0 +1,200 @@
+{#
+  The specimen: every shared component, once, under one theme preset.
+
+  It exists so a change here can be LOOKED AT before it is pinned. A pin bump
+  is the first moment a shared-CSS change meets a rendering site, and by then
+  it is a one-line SHA diff in four repos at once; nobody opens twenty-seven
+  presets to see what the line did. toolbox's `visual` suite renders this page
+  at the old pin and the new one, screenshots each section, and reports which
+  presets changed and where (`tests/visual/test_pin_preview.py` there).
+
+  Rendered by python/fleet_specimen, never by a consumer's route. Inputs:
+
+      preset    the theme file to load, e.g. 'valheim'
+      css_href  URL prefix of this tree's css/ directory, relative to the page
+
+  The rules this page keeps, and why each one matters to the diff:
+
+  * **Only fleet-ui markup.** The classes are site.css's and the macros are
+    this repo's. A consumer's own component (article_card, entity_card) is
+    copied here as the markup it emits, because that is what the CSS is
+    styled against — the macro itself stays in its consumer.
+  * **Fixed content.** No date, no count, no image from anywhere. Anything
+    that can change between two renders is a difference that is not the pin's.
+  * **No script, no remote request.** The blogs ship no application script,
+    and articles-ai's no-JavaScript test reads this directory too.
+  * **Every section is a `[data-specimen]` element**, and the name is the
+    report's word for "where". Renaming one renames a column in every report
+    after it; adding one is free.
+#}
+{%- from "macros/fleet.html" import fleet_nav_split -%}
+{%- from "macros/header.html" import nav_toggle, nav_row -%}
+{%- from "macros/icons.html" import icon -%}
+{%- set links = [
+  {'kind': 'blog', 'url': 'https://specimen.test', 'label': 'Specimen'},
+  {'kind': 'database', 'url': 'https://db.specimen.test', 'label': 'Database'},
+  {'kind': 'tools', 'url': 'https://tools.specimen.test', 'label': 'Tools'},
+  {'kind': 'sibling', 'url': 'https://sister.test', 'label': 'Sister blog'},
+  {'kind': 'sibling', 'url': 'https://cousin.test', 'label': 'Cousin blog'},
+] -%}
+{%- set menus = {'https://db.specimen.test': [
+  {'name': 'Weapons', 'url': 'https://db.specimen.test/weapons/'},
+  {'name': 'Armour', 'url': 'https://db.specimen.test/armour/'},
+  {'name': 'Creatures', 'url': 'https://db.specimen.test/creatures/'},
+]} -%}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{{ preset }} · fleet-ui specimen</title>
+  <link rel="stylesheet" href="{{ css_href }}/site.css">
+  <link rel="stylesheet" href="{{ css_href }}/themes/{{ preset }}.css">
+</head>
+<body>
+  {% include "partials/icon_sprite.html" %}
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" data-specimen="header">
+    <div class="container header-inner">
+      <a class="site-brand" href="#">
+        <span class="site-brand-text">
+          <span class="site-title">Specimen Field Guide</span>
+          <span class="site-tagline">Every shared component, once</span>
+        </span>
+      </a>
+      {{ nav_toggle() }}
+      <div class="header-actions">
+        {{ fleet_nav_split(links, 'https://specimen.test', 'primary', menus) }}
+        <form class="search-form" action="#" method="get" role="search">
+          <input class="input" type="search" name="q" placeholder="Ask A Question" aria-label="Search articles">
+          <button class="btn" type="submit" aria-label="Search">{{ icon('search') }}</button>
+        </form>
+      </div>
+      {% call nav_row() %}
+        <a href="#" aria-current="page">Guides</a><a href="#">Builds</a><a href="#">News</a><a href="#">About</a>
+        {{ fleet_nav_split(links, 'https://specimen.test', 'more') }}
+      {% endcall %}
+    </div>
+  </header>
+
+  <main class="container" id="main" tabindex="-1">
+    <article class="article" data-specimen="article">
+      <nav class="breadcrumb" aria-label="Breadcrumb"><a href="#">Home</a> / <a href="#">Guides</a></nav>
+      <header class="article-header">
+        <a class="eyebrow" href="#">{{ icon('tag') }} Guides</a>
+        <h1 class="article-title">A specimen article title that wraps onto a second line</h1>
+        <div class="byline">
+          <div class="byline-text">
+            <span class="byline-name">By Specimen Persona</span>
+            <span class="byline-quals">Published by Specimen Field Guide</span>
+          </div>
+        </div>
+      </header>
+      <div class="article-body">
+        <p>Body copy sets the measure. It carries <a href="#">an internal link</a>,
+          <a class="ext" href="#">an external citation</a>, <strong>strong text</strong>
+          and <em>emphasis</em>, so a change to any of them shows here first.</p>
+        <h2>A section heading on the spine</h2>
+        <p>The second paragraph sits under a heading, where the accent rule ticks.</p>
+        <blockquote><p>A pull quote steps out and takes the rule over for its height.</p></blockquote>
+        <ul>
+          <li>An unordered list item</li>
+          <li>A second item, longer, to show how a wrapped line hangs under its own marker</li>
+        </ul>
+        <table>
+          <thead><tr><th>Body table</th><th>Value</th></tr></thead>
+          <tbody><tr><td>Markdown row</td><td>One</td></tr><tr><td>Second row</td><td>Two</td></tr></tbody>
+        </table>
+      </div>
+      <p class="article-tags"><a class="tag" href="#">first tag</a> <a class="tag" href="#">second tag</a></p>
+    </article>
+
+    <section class="section" data-specimen="cards">
+      <h2 class="section-title">Cards</h2>
+      <div class="card-grid">
+        {%- for title in ['A card with a placeholder image', 'A second card whose title runs long enough to wrap twice in the grid'] %}
+        <article class="card">
+          <a class="card-link" href="#">
+            <div class="card-media"><div class="card-image card-image-placeholder" aria-hidden="true">{{ icon('image') }}</div></div>
+            <div class="card-body">
+              <span class="card-category">{{ icon('tag') }} Guides</span>
+              <h3 class="card-title">{{ title }}</h3>
+              <p class="card-excerpt">The excerpt is muted type, which is the colour of most of the small text on every site.</p>
+              <div class="card-meta"><span>{{ icon('user') }} By Specimen Persona</span><span>{{ icon('clock') }} Published <time>March 4</time></span></div>
+            </div>
+          </a>
+        </article>
+        {%- endfor %}
+      </div>
+      <div class="tool-grid">
+        {%- for name in ['Specimen calculator', 'Specimen planner'] %}
+        <a class="tool-card" href="#">
+          <span class="tool-card-icon" aria-hidden="true">{{ icon('calculator') }}</span>
+          <span class="tool-card-body">
+            <span class="tool-card-title">{{ name }}<span class="tool-card-arrow" aria-hidden="true"> &rarr;</span></span>
+            <span class="tool-card-summary">A companion tool card, outlined because it leaves the site.</span>
+            <span class="card-category">Planning</span>
+          </span>
+        </a>
+        {%- endfor %}
+      </div>
+    </section>
+
+    <section class="section" data-specimen="tables">
+      <h2 class="section-title">Tables</h2>
+      <div class="table-scroll">
+        <table class="stat-table">
+          <thead><tr><th scope="col">Field</th><th scope="col">Value</th><th scope="col">Notes</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Damage</th><td>Ninety-five slash</td><td><a href="#">Source row</a></td></tr>
+            <tr><th scope="row">Weight</th><td>Two</td><td>A muted note in a cell</td></tr>
+            <tr><th scope="row">Recipe</th><td><ul class="stat-sublist"><li><span class="stat-subkey">iron</span> <span class="stat-subval">twenty</span></li><li><span class="stat-subkey">wood</span> <span class="stat-subval">four</span></li></ul></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-scroll">
+        <table class="stat-table compare-table">
+          <thead><tr><th scope="col">Compare</th><th scope="col">First</th><th scope="col">Second</th></tr></thead>
+          <tbody><tr><th scope="row">Tier</th><td>Bronze</td><td>Iron</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" data-specimen="forms">
+      <h2 class="section-title">Forms</h2>
+      <div class="filter-chips">
+        <a class="filter-chip tag is-active" href="#">Active<span class="filter-count">six</span></a>
+        <a class="filter-chip tag" href="#">Inactive<span class="filter-count">two</span></a>
+      </div>
+      <form class="form" action="#" method="post">
+        <div class="field"><label for="sp-name">Name</label><input class="input" id="sp-name" name="name" value="Filled value"></div>
+        <div class="field"><label for="sp-email">Email</label><input class="input" id="sp-email" type="email" name="email" placeholder="you@example.com"></div>
+        <div class="field"><label for="sp-msg">Message</label><textarea class="textarea" id="sp-msg" name="message">A textarea with a line in it.</textarea></div>
+        <p class="form-banner">A form banner: what happened after the last submit.</p>
+        <div><button class="btn" type="submit">{{ icon('send') }} Primary</button> <a class="btn btn-outline" href="#">Outline</a> <button class="btn-quiet" type="button">Quiet action</button></div>
+      </form>
+      <p class="muted">Muted paragraph text under a form.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer" data-specimen="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand"><strong>Specimen Field Guide</strong></div>
+      <nav aria-label="Footer"><a href="#">About</a><a href="#">Contact</a><a href="#">Privacy</a><a href="#">{{ icon('rss') }} RSS</a></nav>
+      <form class="newsletter-form" method="post" action="#">
+        <label class="footer-note" for="footer-email">Get new articles &amp; guides by email</label>
+        <div class="newsletter-row">
+          <input class="input" id="footer-email" type="email" name="email" placeholder="you@example.com">
+          <button class="btn" type="submit">{{ icon('send') }} Subscribe</button>
+        </div>
+      </form>
+    </div>
+    <div class="container footer-bottom">
+      <p class="footer-note">A per-site disclaimer line, in footer-note type.</p>
+      &copy; Specimen Field Guide.
+    </div>
+  </footer>
+</body>
+</html>
