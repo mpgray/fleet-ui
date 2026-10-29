@@ -9,3 +9,6 @@ agent-log/
 
 __pycache__/
 .pytest_cache/
+
+# scripts/build_specimen.py writes here.
+build/

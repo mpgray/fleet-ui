@@ -22,6 +22,9 @@ css/fonts/<family>/       vendored woff2 faces + the @font-face CSS + LICENSE,
                           one directory per family. Generated — see below.
 scripts/check_contrast.py CI: every preset clears WCAG AA. Runs standalone.
 scripts/vendor_fonts.py   CI: syncs css/fonts/ to the families the presets name.
+scripts/build_specimen.py the specimen page for every preset, to open by hand
+templates/specimen/       specimen.html — every shared component once, per preset
+python/fleet_specimen/    renders it from any fleet-ui tree (Pin Preview)
 python/fleet_contracts/   page contracts consumers run in their own pytest
                           suites — structured_data.py (JSON-LD). Never imported
                           by a running site.
@@ -226,6 +229,35 @@ assert found[0]['dateModified'] == article['last_revised_at']   # what only you 
 The contract's own tests are `tests/test_structured_data.py`
 (`python -m pytest tests`, pytest only). A rule changed here reaches a consumer
 at its next pin bump, which is where it is judged against real pages.
+
+## Pin Preview: see a change on every theme before the pin bumps
+
+A pin bump is a one-line SHA diff, and it is the first moment a change here
+meets a site that renders it. **The specimen** (`templates/specimen/specimen.html`)
+is every shared component once — the two-row header, the article spine, cards
+and tool cards, stat and compare tables, forms and chips, the footer — under one
+preset, with fixed content, no script and no remote request.
+
+By hand, after editing anything here:
+
+```bash
+python3 scripts/build_specimen.py     # then open build/specimen/index.html
+```
+
+Before and after a pin, on every preset: toolbox's `visual` suite
+(`tests/visual/test_pin_preview.py` there, the only place in the fleet that may
+run Playwright) renders the specimen from the old pin and the new one in the
+same browser, screenshots each section at desktop and phone width plus both
+menus open, and fails one test per preset whose pictures differ — naming the
+regions, the tokens its file changed and any shared file that moved, with the
+before/after images in a report. The specimen page itself always comes from
+the newer tree and the macros from each tree, so adding a section here is not
+a difference, and a pin from before the specimen existed can still be compared.
+
+Keep it complete: a component added to `site.css` that is not on the specimen
+is a component no preview will ever show changing. Each section is a
+`[data-specimen]` element whose name is the report's word for "where"
+(`fleet_specimen.SECTIONS`, held in step by `tests/test_specimen.py`).
 
 ## Provenance
 
